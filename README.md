@@ -15,9 +15,7 @@ It does **not** contain source code.
 - [Open deck](link-to-file.pdf)  
 - Or view `deck.pdf` / `index.html` in this repo.
 
-## Contact
-For questions, reach out at: (your email / site)
 
 ---
 
-*This repo is for presenting ideas, not shipping code.*
+
