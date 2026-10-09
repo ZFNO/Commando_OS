@@ -255,4 +255,77 @@ an edited asset, the link/script URL was cache-busted (?v=...) before measuring.
   Live DOM: styleSheets cssRules contains exactly 1 @import rule (parses cleanly);
   `document.fonts.check('16px "Bebas Neue"')` = true and `...("Alliance no.2")` = true,
   document.fonts.status = "loaded"; h1 computed font-family = "Bebas Neue".
+## Phase 4 - Accessibility
+
+### Item 18 - the hamburger was a bare div
+- Files: home.html, script.js, style.css
+- Changed:
+  * home.html: `<div class="hamburger" id="hamburger">` -> 
+    `<button class="hamburger" id="hamburger" type="button" aria-label="Open menu"
+     aria-expanded="false" aria-controls="menu-list">`; the three bar <div>s became <span>s
+     (a <div> is not phrasing content and is not valid inside a <button>), and the nav list got
+     `id="menu-list"` so aria-controls points at something real.
+  * script.js: the existing click handler now goes through `setMenuState(open)` which toggles
+    `.active`, `aria-expanded` and `aria-label` ("Open menu" / "Close menu"). Added a document
+    keydown handler: Escape closes the menu and returns focus to the hamburger.
+  * style.css: `.hamburger` got a button reset (`background:none; border:0; padding:0;
+    appearance:none;`) so the native button chrome does not show, and the 6 `.hamburger div`
+    selectors became `.hamburger span`.
+- Verified (live DOM, fresh cache-busted assets):
+    tagName=BUTTON, type="button", aria-label="Open menu", aria-expanded="false",
+    aria-controls="menu-list" (target exists), tabIndex=0 (reachable by Tab)
+    click()      -> nav gets .active, aria-expanded="true", aria-label="Close menu"
+    Escape key   -> .active removed, aria-expanded="false"
+    bars: 3 spans, 25px x 3px each; with the menu open + display forced on, the X animation is
+    intact: bar1 = matrix(0.707107,0.707107,-0.707107,0.707107,0.707107,7.77817)  (rotate 45deg,
+    translate 6,5), bar2 = translateX(-100px) + opacity 0, bar3 = rotate(-45deg) - i.e. same as before.
+
+### Item 19 - decorative videos in the accessibility tree
+- File: script.js
+- Changed: both the card video and the reflection video are created with
+  `setAttribute('aria-hidden', 'true')`. They are silent, looped, control-less background clips.
+- Verified (live DOM): `document.querySelectorAll('video[aria-hidden="true"]').length` = 24 out of
+  24 videos.
+
+### Item 20 - cards were click/touch only
+- File: script.js
+- Changed:
+  * each real card is created with `card.tabIndex = 0`, `role="button"` and `aria-pressed="false"`;
+  * `selectCard()` now keeps aria-pressed in sync (true on the new card, false on the previous one);
+  * a keydown listener on each non-reflection card selects it on Enter or Space (with preventDefault
+    so Space does not scroll).
+- Verified (live DOM, fresh assets):
+    .card[role="button"] = 12, cards with tabIndex 0 = 12
+    card0.focus() -> document.activeElement === card0
+    Enter on card0 -> .selected added, aria-pressed="true"
+    Space on card1 -> .selected on card1, aria-pressed="true" on card1 and "false" on card0
+    (a keydown sent to a `.reflection card` is ignored - the guard keeps reflections out of the tab order)
+
+### Item 21 - prefers-reduced-motion only slowed things down
+- Files: style.css, script.js
+- Changed:
+  * style.css: `@media (prefers-reduced-motion: reduce) { .a3d { animation-duration: 70s } }` ->
+    `.a3d { animation: none }` - the carousel stops instead of crawling.
+  * script.js: window.onload now reads `matchMedia('(prefers-reduced-motion: reduce)')` and, when it
+    matches, writes the first headline / first card text straight into the DOM instead of running the
+    typewriter at all.
+- Verified:
+  * served CSS: the media rule resolves to `.a3d { animationName: none }`.
+  * live DOM with matchMedia stubbed to match (temporary check page, since the automated tab cannot
+    flip the OS setting): intro = "One AI. Infinite Profiles. All Systems Go." (42 chars, complete,
+    no typing), the live region holds the same text, and card1's text is the complete
+    "300+ commands; comlpete commandline freedom".
+  * normal page (no stub): the typewriter is still animating - sampled twice, "One AI. Infinite
+    Profiles. All Systems Go." then "Deploy a".
+
+### Item 22 - the typewriter announced unpredictably
+- Files: home.html, style.css, script.js
+- Changed: added a polite live region as a static text node:
+  `<p class="sr-only" id="typewriter_live" aria-live="polite"></p>` right after the headline h2, plus
+  a `.sr-only` visually-hidden utility in style.css. script.js updates it ONCE per headline (when
+  charIndex === 0 in animateTypewriter) and once for the reduced-motion path - so screen readers get
+  the whole headline instead of a stream of single characters.
+- Verified (live DOM): #typewriter_live.textContent = "One AI. Infinite Profiles. All Systems Go."
+  (the full headline, set once when that headline started), while the visible h2 is mid-type
+  ("Deploy a"), i.e. the announcements are not per-keystroke.
 

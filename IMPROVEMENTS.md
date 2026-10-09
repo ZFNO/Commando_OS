@@ -36,11 +36,11 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 - [x] 17 style.css font import is broken: four families over a line broken url with stray backslashes, three of those families do not exist on Google Fonts and are never used, and Bebas Neue is unencoded. Keep the local alliance-no2 woff2, fix or self host the rest, and add display swap.
 
 ## Phase 4 - Accessibility
-- [ ] 18 The hamburger is a bare div: not focusable, no keyboard support, no aria-label, aria-expanded or aria-controls. Make it a button, toggle aria-expanded in the existing click handler, and close the menu on Escape.
-- [ ] 19 The videos are decorative. Add aria-hidden so 24 silent videos stay out of the accessibility tree.
-- [ ] 20 Cards are click and touch only. Add tabindex, a role, and Enter/Space handling to selectCard.
-- [ ] 21 prefers-reduced-motion only slows the carousel to 70s. Stop the carousel and the typewriter outright.
-- [ ] 22 The typewriter has no aria-live, so the headline is announced unpredictably. Add aria-live polite or expose a static text node.
+- [x] 18 The hamburger is a bare div: not focusable, no keyboard support, no aria-label, aria-expanded or aria-controls. Make it a button, toggle aria-expanded in the existing click handler, and close the menu on Escape.
+- [x] 19 The videos are decorative. Add aria-hidden so 24 silent videos stay out of the accessibility tree.
+- [x] 20 Cards are click and touch only. Add tabindex, a role, and Enter/Space handling to selectCard.
+- [x] 21 prefers-reduced-motion only slows the carousel to 70s. Stop the carousel and the typewriter outright.
+- [x] 22 The typewriter has no aria-live, so the headline is announced unpredictably. Add aria-live polite or expose a static text node.
 
 ## Phase 5 - Cleanup and DX
 - [ ] 23 Scratch and dead files tracked in git: scriptjs_scratch.js, scriptx.js, versions/scr.js, x.bat (empty), mac_commando.zip plus its extracted folder, and the stale dist/ build. Depends on D2.
@@ -65,3 +65,6 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 - 2026-10-09 - Phase 3 complete (items 14-17). Videos preload=metadata + play/pause on
   visibility + off-screen pause, animate() rAF loop gated to the in-view scene, broken Google
   Fonts @import replaced with a single encoded Bebas Neue + font-display swap on the local woff2.
+- 2026-10-09 - Phase 4 complete (items 18-22). Hamburger is a real button with aria-expanded/
+  aria-controls + Escape-to-close, decorative videos aria-hidden, cards keyboard-selectable,
+  reduced-motion stops the carousel + typewriter, polite live region announces each headline once.

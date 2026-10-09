@@ -2,8 +2,22 @@
 const hamburger = document.getElementById('hamburger');
 const nav = document.querySelector('nav');
 
+function setMenuState(open) {
+    nav.classList.toggle('active', open);
+    hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    hamburger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+}
+
 hamburger.addEventListener('click', () => {
-    nav.classList.toggle('active');
+    setMenuState(!nav.classList.contains('active'));
+});
+
+// Escape closes the mobile menu and returns focus to the hamburger
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && nav.classList.contains('active')) {
+        setMenuState(false);
+        hamburger.focus();
+    }
 });
 
 /*
@@ -87,6 +101,9 @@ for (let i = 0; i < N; i++) {
     const card = document.createElement('div');
     card.className = 'card';           // same class
     card.style.setProperty('--i', i); // same inline style
+    card.tabIndex = 0;                // keyboard reachable
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-pressed', 'false');
 
     const video = document.createElement('video');
     video.src = DATA[i];
@@ -95,6 +112,7 @@ for (let i = 0; i < N; i++) {
     video.muted = true;
     video.playsInline = true;
     video.preload = 'metadata';
+    video.setAttribute('aria-hidden', 'true');
     video.controls = false;
     video.disablePictureInPicture = true;
     video.controlsList = "nodownload nofullscreen noremoteplayback";
@@ -128,6 +146,7 @@ for (let i = 0; i < N; i++) {
     reflectionVideo.muted = true;
     reflectionVideo.playsInline = true;
     reflectionVideo.preload = 'metadata';
+    reflectionVideo.setAttribute('aria-hidden', 'true');
     reflectionVideo.controls = false;
     reflectionVideo.disablePictureInPicture = true;
     reflectionVideo.controlsList = "nodownload nofullscreen noremoteplayback";
@@ -443,6 +462,11 @@ const cardtext = {
 
 
 function animateTypewriter(element, texts, textIndex = 0, charIndex = 0) {
+    // announce each headline once (not every keystroke) through the polite live region
+    if (charIndex === 0 && element.id === 'typewriter_intro') {
+        const live = document.getElementById('typewriter_live');
+        if (live) live.textContent = texts[textIndex];
+    }
     if (charIndex < texts[textIndex].length) {
         element.textContent = texts[textIndex].substring(0, charIndex + 1);
         setTimeout(() => {
@@ -510,8 +534,10 @@ const MAX_TOUCH_MOVE = 10;
 function selectCard(card) {
     if (selectedCard) {
         selectedCard.classList.remove('selected');
+        selectedCard.setAttribute('aria-pressed', 'false');
     }
     card.classList.add('selected');
+    card.setAttribute('aria-pressed', 'true');
     selectedCard = card;
 }
 
@@ -545,6 +571,16 @@ document.querySelectorAll('.card').forEach(card => {
         e.stopPropagation();
         selectCard(card);
     });
+
+    // Enter / Space select a card too (the click path is pointer only)
+    if (!card.classList.contains('reflection')) {
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault();
+                selectCard(card);
+            }
+        });
+    }
 });
 
 
@@ -710,16 +746,31 @@ el.addEventListener('touchend', () => {
 
 
 window.onload = () => {
+    // prefers-reduced-motion: show the text statically instead of typing it
+    const reduceMotion = window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     // For single intro element
     const intro = document.getElementById('typewriter_intro');
-    if (intro) animateTypewriter(intro, headlines);
+    if (intro) {
+        if (reduceMotion) {
+            intro.textContent = headlines[0];
+            const live = document.getElementById('typewriter_live');
+            if (live) live.textContent = headlines[0];
+        } else {
+            animateTypewriter(intro, headlines);
+        }
+    }
 
     // For all card-text elements
     const cardsText = document.querySelectorAll('.card-text');
     cardsText.forEach((card, index) => {
         const key = 'card' + (index + 1);
         const texts = cardtext[key];
-        if (texts) {
+        if (!texts) return;
+        if (reduceMotion) {
+            card.textContent = texts[0];
+        } else {
             animateTypewriter(card, texts);
         }
     });
