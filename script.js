@@ -439,7 +439,7 @@ const cardtext = {
     card3:  ['Script tracking, built in.', 'Every snippet saved, retrievable.'],
     card4:  ['The right LLM for any task.', 'OpenAI, Claude, DeepSeek, Qwen.'],
     card5:  ['Office suite, integrated.', 'Docs, sheets, slides, PDFs, notes.'],
-    card6:  ['Voice mode, hands free.', 'RVC + Whisper custom voices.'],
+    card6:  ['Voice mode, hands free.', 'Natural conversation, in any voice.'],
     card7:  ['Personas and prompt hotkeys.', 'Multi-level macros, one key.'],
     card8:  ['Run your code right here.', 'Multi-language runtimes, built in.'],
     card9:  ['Save prompts as shortcuts.', 'A powerful alias manager.'],
