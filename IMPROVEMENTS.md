@@ -7,20 +7,20 @@ Created: 2026-08-26
 Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 
 ## Decisions needed before further code changes
-- [ ] D1 Iframe or single page: drop the iframe in index.html and inline home.html, or keep it. Affects items 8, 9, 10, 11.
+- [x] D1 Iframe or single page: drop the iframe in index.html and inline home.html, or keep it. Affects items 8, 9, 10, 11.
 - [ ] D2 Deletion scope: which of these are live vs junk - dist/, export/, mac_commando/, mac_commando.zip, scriptx.js, scriptjs_scratch.js, versions/, x.bat, dontinclude/
 - [ ] D3 Deploy path: GitHub Pages from repo root, or the update.bat plus export/ flow. README must match.
 
 ## Phase 1 - Correctness bugs
-- [ ] 1 home.html - malformed comment. The line parses as an empty comment followed by literal text, so the browser renders the stray text into the nav. Confirmed live: the nav currently prints it. Fix to a normal comment.
-- [ ] 2 home.html - the dev colour panel sits inside the nav ul, so its form labels are appended into the nav list and the nav text becomes a run of css variable names plus Close. Give the panel a top level wrapper outside nav.
-- [ ] 3 home.html - toggleBtn and editColorsBtn are empty buttons: invisible but still clickable dead spots. Label them or gate the whole dev block.
-- [ ] 4 script.js - guard the dev lookups. getElementById on colorForm, editColorsBtn, toggleBtn and closeMenu is unguarded, so deleting the dev section (which the HTML comment tells you to do) throws and kills the carousel and the typewriter. Wrap in if (el) or use optional chaining. Highest value single fix.
-- [ ] 5 home.html - remove the invalid inline style on .logo-burger: a media query is not allowed in a style attribute, so font-size 50px is silently dropped. Move it to style.css.
-- [ ] 6 style.css - .card.selected sets transform: scale(1.1), which replaces the card 3D transform chain (rotatey plus translatez), so the selected card pops out of the ring. Use the independent scale property instead.
-- [ ] 7 style.css - invalid declarations: nav declares height twice (200px then 65px), nav ul has opacity: transparent (needs a number), mobile nav.active ul has display: relative.
-- [ ] 8 index.js is dead code - it fetches home.html into index.html, but index.html uses a full screen iframe instead. Delete it or switch to the fetch approach. Depends on D1.
-- [ ] 9 position: fixed inside the iframe - .bounding-box, #colorMenu and .reflection anchor to the iframe rather than the viewport. Re-check after D1.
+- [x] 1 home.html - malformed comment. The line parses as an empty comment followed by literal text, so the browser renders the stray text into the nav. Confirmed live: the nav currently prints it. Fix to a normal comment.
+- [x] 2 home.html - the dev colour panel sits inside the nav ul, so its form labels are appended into the nav list and the nav text becomes a run of css variable names plus Close. Give the panel a top level wrapper outside nav.
+- [x] 3 home.html - toggleBtn and editColorsBtn are empty buttons: invisible but still clickable dead spots. Label them or gate the whole dev block.
+- [x] 4 script.js - guard the dev lookups. getElementById on colorForm, editColorsBtn, toggleBtn and closeMenu is unguarded, so deleting the dev section (which the HTML comment tells you to do) throws and kills the carousel and the typewriter. Wrap in if (el) or use optional chaining. Highest value single fix.
+- [x] 5 home.html - remove the invalid inline style on .logo-burger: a media query is not allowed in a style attribute, so font-size 50px is silently dropped. Move it to style.css.
+- [x] 6 style.css - .card.selected sets transform: scale(1.1), which replaces the card 3D transform chain (rotatey plus translatez), so the selected card pops out of the ring. Use the independent scale property instead.
+- [x] 7 style.css - invalid declarations: nav declares height twice (200px then 65px), nav ul has opacity: transparent (needs a number), mobile nav.active ul has display: relative.
+- [x] 8 index.js is dead code - it fetches home.html into index.html, but index.html uses a full screen iframe instead. Delete it or switch to the fetch approach. Depends on D1.
+- [x] 9 position: fixed inside the iframe - .bounding-box, #colorMenu and .reflection anchor to the iframe rather than the viewport. Re-check after D1.
 
 
 ## Phase 2 - Structure and metadata
@@ -56,3 +56,6 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 - 2026-08-26 - Local preview server running on port 8123 for visual review.
 - 2026-08-26 - This checklist written. No source files changed yet.
 
+- 2026-10-09 - Phase 1 complete (items 1-9). index.js deleted, dev panel moved out of the nav,
+  dev lookups in script.js guarded, CSS invalid declarations fixed, .card.selected uses scale.
+  Assumption taken for D1: keep the iframe (item 9 documented, not redesigned).

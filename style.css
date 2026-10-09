@@ -70,6 +70,14 @@ display=swap');
 	font-size: 16px;
 }
 
+/* dev panel container (dev only) */
+.dev-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 10001;
+}
+
 #colorMenu {
 	color: black;
   max-width: 300px;
@@ -82,7 +90,6 @@ display=swap');
 nav {
 
 	font-family: var(--main-font);
-  height:200px;
     width: 100%;         /* be explicit */
   max-width: 100vw;    /* never get wider than viewport */
   box-sizing: border-box;
@@ -127,7 +134,7 @@ nav ul {
   gap: 2rem;
   margin: 0;
   padding: 3%;
-	opacity: transparent;
+	opacity: 1;
 }
 /* */
 nav ul li a {
@@ -287,13 +294,16 @@ nav.active .hamburger div:nth-child(3) {
     transition: background-color 1.5s ease, display 1.5s ease;
     justify-content: center; /* horizontal */
     align-items: center;
-    display: relative;
     flex-direction: column;
     justify-content: center; /* vertical align */
     align-items: center;     /* horizontal align */
     gap: 20px;               /* space between items */
     height: 100%;
 
+  }
+
+  nav.active .logo-burger {
+    font-size: 50px;
   }
 
 	nav.active menu-list {
@@ -634,17 +644,17 @@ pointer-events: none;
   }
 
 .card.selected {
-  transform: scale(1.1);
+  scale: 1.1;
   z-index: 100;
   box-shadow: 0 0 30px rgba(247, 181, 56, 0.7);
   border: 2px solid #F7b538;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: scale 0.3s ease, box-shadow 0.3s ease;
   }
 
 @keyframes card-pulse {
-  0% {transform: scale(1.05);}
-  50% {transform: scale(1.08);}
-  100% {transform: scale(1.05);}
+  0% {scale: 1.05;}
+  50% {scale: 1.08;}
+  100% {scale: 1.05;}
   }
 
 .card.selected {

@@ -199,39 +199,47 @@ const activeValues = {
     '--card-text': '#F7b538',
 };
 
-// Create form inputs dynamically
+// Create form inputs dynamically (dev block - guarded, safe to delete after publish)
 const form = document.getElementById('colorForm');
-for (const [varName, color] of Object.entries(activeValues)) {
-    const label = document.createElement('label');
-    label.textContent = varName + ': ';
-    label.style.display = 'block';
+if (form) {
+    for (const [varName, color] of Object.entries(activeValues)) {
+        const label = document.createElement('label');
+        label.textContent = varName + ': ';
+        label.style.display = 'block';
 
-    const input = document.createElement('input');
-    input.type = 'color';
-    input.value = color;
-    input.dataset.var = varName;
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.value = color;
+        input.dataset.var = varName;
 
-    input.addEventListener('input', e => {
-        root.style.setProperty(e.target.dataset.var, e.target.value);
-    });
+        input.addEventListener('input', e => {
+            root.style.setProperty(e.target.dataset.var, e.target.value);
+        });
 
-    label.appendChild(input);
-    form.appendChild(label);
+        label.appendChild(input);
+        form.appendChild(label);
+    }
 }
 
-// Show/hide menu
-document.getElementById('editColorsBtn').addEventListener('click', () => {
-    const menu = document.getElementById('colorMenu');
-    if (menu.style.display === 'none' || !menu.style.display) {
-        menu.style.display = 'block';
-    } else {
-        menu.style.display = 'none';
-    }
-});
+// Show/hide menu (dev block - guarded, safe to delete after publish)
+const editColorsBtn = document.getElementById('editColorsBtn');
+const colorMenu = document.getElementById('colorMenu');
+if (editColorsBtn && colorMenu) {
+    editColorsBtn.addEventListener('click', () => {
+        if (colorMenu.style.display === 'none' || !colorMenu.style.display) {
+            colorMenu.style.display = 'block';
+        } else {
+            colorMenu.style.display = 'none';
+        }
+    });
+}
 
-document.getElementById('closeMenu').addEventListener('click', () => {
-    document.getElementById('colorMenu').style.display = 'none';
-});
+const closeMenu = document.getElementById('closeMenu');
+if (closeMenu && colorMenu) {
+    closeMenu.addEventListener('click', () => {
+        colorMenu.style.display = 'none';
+    });
+}
 
 
 
@@ -244,14 +252,17 @@ function applyColors(colors) {
     }
 }
 
-document.getElementById('toggleBtn').addEventListener('click', () => {
-    if (active) {
-        applyColors(defaultValues);
-    } else {
-        applyColors(activeValues);
-    }
-    active = !active;
-});
+const toggleBtn = document.getElementById('toggleBtn');
+if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+        if (active) {
+            applyColors(defaultValues);
+        } else {
+            applyColors(activeValues);
+        }
+        active = !active;
+    });
+}
 //------toggle root values-------
 
 
