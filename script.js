@@ -2,8 +2,22 @@
 const hamburger = document.getElementById('hamburger');
 const nav = document.querySelector('nav');
 
+function setMenuState(open) {
+    nav.classList.toggle('active', open);
+    hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    hamburger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+}
+
 hamburger.addEventListener('click', () => {
-    nav.classList.toggle('active');
+    setMenuState(!nav.classList.contains('active'));
+});
+
+// Escape closes the mobile menu and returns focus to the hamburger
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && nav.classList.contains('active')) {
+        setMenuState(false);
+        hamburger.focus();
+    }
 });
 
 /*
@@ -87,6 +101,9 @@ for (let i = 0; i < N; i++) {
     const card = document.createElement('div');
     card.className = 'card';           // same class
     card.style.setProperty('--i', i); // same inline style
+    card.tabIndex = 0;                // keyboard reachable
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-pressed', 'false');
 
     const video = document.createElement('video');
     video.src = DATA[i];
@@ -94,6 +111,8 @@ for (let i = 0; i < N; i++) {
     video.loop = true;
     video.muted = true;
     video.playsInline = true;
+    video.preload = 'metadata';
+    video.setAttribute('aria-hidden', 'true');
     video.controls = false;
     video.disablePictureInPicture = true;
     video.controlsList = "nodownload nofullscreen noremoteplayback";
@@ -126,6 +145,8 @@ for (let i = 0; i < N; i++) {
     reflectionVideo.loop = true;
     reflectionVideo.muted = true;
     reflectionVideo.playsInline = true;
+    reflectionVideo.preload = 'metadata';
+    reflectionVideo.setAttribute('aria-hidden', 'true');
     reflectionVideo.controls = false;
     reflectionVideo.disablePictureInPicture = true;
     reflectionVideo.controlsList = "nodownload nofullscreen noremoteplayback";
@@ -136,6 +157,42 @@ for (let i = 0; i < N; i++) {
 
     container.appendChild(card);
 }
+
+
+
+//---- video autoplay + visibility (only decode what is on screen) ----
+const videos = document.querySelectorAll('.card video');
+
+function playVideo(v) {
+    const p = v.play();
+    // autoplay can be rejected (e.g. hidden tab) - swallow the rejection
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+}
+
+const videoObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+        const v = entry.target;
+        v.dataset.inview = entry.isIntersecting ? '1' : '0';
+        if (entry.isIntersecting && !document.hidden) {
+            playVideo(v);
+        } else {
+            v.pause();
+        }
+    });
+}, { rootMargin: '50px' });
+
+videos.forEach(v => videoObserver.observe(v));
+
+document.addEventListener('visibilitychange', () => {
+    videos.forEach(v => {
+        if (document.hidden) {
+            v.pause();
+        } else if (v.dataset.inview === '1') {
+            playVideo(v);
+        }
+    });
+});
+//---- end video autoplay + visibility ----
 
 
 
@@ -199,39 +256,47 @@ const activeValues = {
     '--card-text': '#F7b538',
 };
 
-// Create form inputs dynamically
+// Create form inputs dynamically (dev block - guarded, safe to delete after publish)
 const form = document.getElementById('colorForm');
-for (const [varName, color] of Object.entries(activeValues)) {
-    const label = document.createElement('label');
-    label.textContent = varName + ': ';
-    label.style.display = 'block';
+if (form) {
+    for (const [varName, color] of Object.entries(activeValues)) {
+        const label = document.createElement('label');
+        label.textContent = varName + ': ';
+        label.style.display = 'block';
 
-    const input = document.createElement('input');
-    input.type = 'color';
-    input.value = color;
-    input.dataset.var = varName;
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.value = color;
+        input.dataset.var = varName;
 
-    input.addEventListener('input', e => {
-        root.style.setProperty(e.target.dataset.var, e.target.value);
-    });
+        input.addEventListener('input', e => {
+            root.style.setProperty(e.target.dataset.var, e.target.value);
+        });
 
-    label.appendChild(input);
-    form.appendChild(label);
+        label.appendChild(input);
+        form.appendChild(label);
+    }
 }
 
-// Show/hide menu
-document.getElementById('editColorsBtn').addEventListener('click', () => {
-    const menu = document.getElementById('colorMenu');
-    if (menu.style.display === 'none' || !menu.style.display) {
-        menu.style.display = 'block';
-    } else {
-        menu.style.display = 'none';
-    }
-});
+// Show/hide menu (dev block - guarded, safe to delete after publish)
+const editColorsBtn = document.getElementById('editColorsBtn');
+const colorMenu = document.getElementById('colorMenu');
+if (editColorsBtn && colorMenu) {
+    editColorsBtn.addEventListener('click', () => {
+        if (colorMenu.style.display === 'none' || !colorMenu.style.display) {
+            colorMenu.style.display = 'block';
+        } else {
+            colorMenu.style.display = 'none';
+        }
+    });
+}
 
-document.getElementById('closeMenu').addEventListener('click', () => {
-    document.getElementById('colorMenu').style.display = 'none';
-});
+const closeMenu = document.getElementById('closeMenu');
+if (closeMenu && colorMenu) {
+    closeMenu.addEventListener('click', () => {
+        colorMenu.style.display = 'none';
+    });
+}
 
 
 
@@ -244,14 +309,17 @@ function applyColors(colors) {
     }
 }
 
-document.getElementById('toggleBtn').addEventListener('click', () => {
-    if (active) {
-        applyColors(defaultValues);
-    } else {
-        applyColors(activeValues);
-    }
-    active = !active;
-});
+const toggleBtn = document.getElementById('toggleBtn');
+if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+        if (active) {
+            applyColors(defaultValues);
+        } else {
+            applyColors(activeValues);
+        }
+        active = !active;
+    });
+}
 //------toggle root values-------
 
 
@@ -297,12 +365,30 @@ function checkIntersect() {
     });
 }
 
+let animateRafId = null;
+
 function animate() {
     checkIntersect();
-    requestAnimationFrame(animate);
+    animateRafId = requestAnimationFrame(animate);
 }
 
-animate();
+// only run the per-frame intersection check while the carousel scene is on screen
+const scene = document.querySelector('.scene');
+if (scene) {
+    const sceneObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if (animateRafId === null) animate();
+            } else if (animateRafId !== null) {
+                cancelAnimationFrame(animateRafId);
+                animateRafId = null;
+            }
+        });
+    });
+    sceneObserver.observe(scene);
+} else {
+    animate();
+}
 
 
 
@@ -348,34 +434,28 @@ const headlines = [
 standout features 5, 6 3
 */
 const cardtext = {
-    card1: ['300+ commands; comlpete commandline freedom', 'streamlined workflows'],
-    
-    card2: ['automated documentat usage and organization', 'automate document editing with their own custom histories'],
-    
-    card3: ['script tracking system', 'every piece of code in the conversation is documented and saved within the session and accessible from a menu to be retrieved along with a permanent script saving system'],
-    
-    card4: ['get the right LLM for the job at any point in the conversation powerfully paired with a strong macro feature system', 'Models from OpenAI, Deepseek, Claude, Qwen and more'],
-    
-    card5: ['proprietary office suites integrated within the environment for document management', 'journaling for executives for a personal onenote/notion-like experience with notebooks along with a spreadsheets, pdfs and powerpoints.'],
-    
-    card6: ['voice mode for hands free interaction while still preserving internal commands', 'seamless integration with RVC and Whisper for integrating hands free assistants and custom voices.'],
-    
-    card7: ['customizable personas and tasks with prompt hotkeys', 'issue commands with the least amount of actions possible with multi level macros for different scales of interaction and efficiency'],
-    
-    card8: ['test your code directly', 'integrated runtimes for multiple languages within the application'],
-    
-    card9: ['add, edit, delete frequently used prompts as shortcuts', 'very powerful alias manager to avoid typing the same or similar prompts everytime'],
-    
-    card10: ['seamlessly switch between models and personas', 'global and local modes for extra personalized experiences'],
-    
-    card11: ['Multiple entry point text editing', 'send from another source and the proper agent receives it'],
-    
-    card12: ['very powerful document editing with their own custom histories ', 'edit documents with your small team that gets autogenerated to complete the task']
-};
+    card1:  ['300+ commands. Total CLI freedom.', 'Streamline any workflow.'],
+    card2:  ['Automated document handling.', 'Edit docs with saved histories.'],
+    card3:  ['Script tracking, built in.', 'Every snippet saved, retrievable.'],
+    card4:  ['The right LLM for any task.', 'OpenAI, Claude, DeepSeek, Qwen.'],
+    card5:  ['Office suite, integrated.', 'Docs, sheets, slides, PDFs, notes.'],
+    card6:  ['Voice mode, hands free.', 'Natural conversation, in any voice.'],
+    card7:  ['Personas and prompt hotkeys.', 'Multi-level macros, one key.'],
+    card8:  ['Run your code right here.', 'Multi-language runtimes, built in.'],
+    card9:  ['Save prompts as shortcuts.', 'A powerful alias manager.'],
+    card10: ['Swap models and personas.', 'Global and local modes.'],
+    card11: ['Multiple text entry points.', 'The right agent gets it, instantly.'],
+    card12: ['Powerful document editing.', 'Team docs, auto-completed.']
+}
 
 
 
 function animateTypewriter(element, texts, textIndex = 0, charIndex = 0) {
+    // announce each headline once (not every keystroke) through the polite live region
+    if (charIndex === 0 && element.id === 'typewriter_intro') {
+        const live = document.getElementById('typewriter_live');
+        if (live) live.textContent = texts[textIndex];
+    }
     if (charIndex < texts[textIndex].length) {
         element.textContent = texts[textIndex].substring(0, charIndex + 1);
         setTimeout(() => {
@@ -393,17 +473,27 @@ function animateTypewriter(element, texts, textIndex = 0, charIndex = 0) {
 const el = document.querySelector('.a3d');
 let progress = 0;  // from 0 to 1
 
+// true while a card is lifted into the foreground (revolve paused)
+let carouselFocused = false;
 
 
-el.addEventListener('mouseenter', () => {
-    el.style.animationPlayState = 'paused';
-});
 
-el.addEventListener('mouseleave', () => {
-    el.style.animationPlayState = 'running';
-});
+// hover-to-pause is a desktop affordance: on touch devices the sticky :hover
+// state would otherwise leave the carousel permanently paused.
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    el.addEventListener('mouseenter', () => {
+        if (carouselFocused) return;
+        el.style.animationPlayState = 'paused';
+    });
+
+    el.addEventListener('mouseleave', () => {
+        if (carouselFocused) return;
+        el.style.animationPlayState = 'running';
+    });
+}
 
 el.addEventListener('wheel', e => {
+    if (carouselFocused) return;
     if (el.style.animationPlayState === 'paused') {
         e.preventDefault();
         // update progress by wheel delta
@@ -439,47 +529,228 @@ const MAX_TOUCH_MOVE = 10;
 
 
 
-// Function to select a card
-function selectCard(card) {
-    if (selectedCard) {
-        selectedCard.classList.remove('selected');
-    }
-    card.classList.add('selected');
-    selectedCard = card;
+/* ---------------- card click/tap -> foreground focus ----------------
+ * Selecting a card lifts it out of the carousel into a static, full-size
+ * foreground view (its reflection hidden, the revolve paused). Selecting the
+ * foregrounded card again sends it back and resumes the revolve.
+ */
+const focusLayer = document.createElement('div');
+focusLayer.id = 'focus-layer';
+focusLayer.setAttribute('aria-hidden', 'true');
+document.body.appendChild(focusLayer);
+
+let focusedCard = null;      // the real card currently lifted forward
+let focusClone = null;       // its overlay clone
+let focusOpenedAt = 0;       // guards against the opening tap's synthetic click
+let lastTouchHandled = 0;    // guards against click-after-touch double firing
+
+// natural aspect ratio of a card's media (fallback: 9:16 portrait)
+function mediaAspect(media) {
+    const vw = media.videoWidth || media.naturalWidth || 0;
+    const vh = media.videoHeight || media.naturalHeight || 0;
+    return (vw && vh) ? (vw / vh) : (9 / 16);
 }
 
-// Add touch events to each card
-document.querySelectorAll('.card').forEach(card => {
-    let cardTouchStart = { time: 0, x: 0, y: 0 };
+// largest centred box of the given aspect that fits the viewport
+function fitRect(ar) {
+    const maxW = window.innerWidth * 0.9;
+    const maxH = window.innerHeight * 0.9;
+    let w = maxW, h = w / ar;
+    if (h > maxH) { h = maxH; w = h * ar; }
+    return {
+        left: (window.innerWidth - w) / 2,
+        top: (window.innerHeight - h) / 2,
+        w: w, h: h,
+        radius: Math.min(w, h) * 0.045
+    };
+}
+
+function setBox(node, l, t, w, h, r) {
+    node.style.left = l + 'px';
+    node.style.top = t + 'px';
+    node.style.width = w + 'px';
+    node.style.height = h + 'px';
+    if (r != null) node.style.borderRadius = r + 'px';
+}
+
+function openFocus(card) {
+    const media = card.querySelector(':scope > video, :scope > img') ||
+                  card.querySelector('video, img');
+    if (!media) return;
+
+    // clear any clone still animating out from a previous close
+    focusLayer.querySelectorAll('.focus-clone').forEach(n => n.remove());
+
+    // freeze the revolve
+    carouselFocused = true;
+    if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    el.style.animationPlayState = 'paused';
+
+    const start = card.getBoundingClientRect();
+
+    // clone the media into a fixed overlay so it can leave the 3D carousel
+    const clone = document.createElement('div');
+    clone.className = 'focus-clone';
+    setBox(clone, start.left, start.top, start.width, start.height, null);
+    clone.style.borderRadius = '1.5em';
+
+    const m = document.createElement(media.tagName === 'IMG' ? 'img' : 'video');
+    m.src = media.currentSrc || media.src;
+    if (media.tagName !== 'IMG') {
+        m.muted = true; m.loop = true; m.autoplay = true;
+        m.setAttribute('playsinline', '');
+        m.disablePictureInPicture = true;
+        m.addEventListener('contextmenu', e => e.preventDefault());
+    } else {
+        m.alt = '';
+    }
+    clone.appendChild(m);
+    focusLayer.appendChild(clone);
+
+    // hide the original card (and, being its child, its reflection)
+    card.style.transition = 'opacity 0.25s ease';
+    card.style.opacity = '0';
+    card.style.pointerEvents = 'none';
+    card.setAttribute('aria-pressed', 'true');
+
+    const t = fitRect(mediaAspect(media));
+
+    // commit the start geometry, then animate out to the foreground fit
+    clone.getBoundingClientRect();
+    const dur = '0.6s', ease = 'cubic-bezier(.22,.9,.24,1)';
+    clone.style.transition =
+        'left ' + dur + ' ' + ease + ', top ' + dur + ' ' + ease + ', ' +
+        'width ' + dur + ' ' + ease + ', height ' + dur + ' ' + ease + ', ' +
+        'border-radius ' + dur + ' ease, box-shadow ' + dur + ' ease';
+
+    // synchronous target set (transition still animates); the forced reflow
+    // above committed the start geometry so the box morphs instead of jumping.
+    setBox(clone, t.left, t.top, t.w, t.h, t.radius);
+    clone.classList.add('open');
+
+    focusedCard = card;
+    focusClone = clone;
+    focusOpenedAt = Date.now();
+    focusLayer.setAttribute('aria-hidden', 'false');
+
+    clone.addEventListener('click', () => {
+        if (Date.now() - focusOpenedAt < 350) return; // ignore the opening tap's click
+        closeFocus();
+    });
+}
+
+function closeFocus(opts) {
+    opts = opts || {};
+    const card = focusedCard, clone = focusClone;
+    if (!card || !clone) return;
+    focusedCard = null;
+    focusClone = null;
+
+    card.setAttribute('aria-pressed', 'false');
+    focusLayer.setAttribute('aria-hidden', 'true');
+
+    const restore = () => {
+        if (clone.parentNode) clone.parentNode.removeChild(clone);
+        // only un-hide / un-freeze this card if it is not focused again already
+        if (focusedCard !== card) {
+            card.style.opacity = '';
+            card.style.pointerEvents = '';
+            setTimeout(() => {
+                if (focusedCard !== card) card.style.transition = '';
+            }, 300);
+        }
+        // only resume the revolve if nothing else is focused now
+        if (!focusedCard) {
+            carouselFocused = false;
+            if (!isDragging) el.style.animationPlayState = 'running';
+        }
+    };
+
+    if (opts.instant) { restore(); return; }
+
+    const r = card.getBoundingClientRect();
+    clone.classList.remove('open');
+    clone.style.transition =
+        'left .45s ease-in, top .45s ease-in, width .45s ease-in, ' +
+        'height .45s ease-in, border-radius .45s ease-in, box-shadow .45s ease-in';
+    setBox(clone, r.left, r.top, r.width, r.height, null);
+    clone.style.borderRadius = '1.5em';
+
+    let done = false;
+    const onEnd = (e) => {
+        if (e.target !== clone || e.propertyName !== 'width' || done) return;
+        done = true;
+        clone.removeEventListener('transitionend', onEnd);
+        restore();
+    };
+    clone.addEventListener('transitionend', onEnd);
+    setTimeout(() => {
+        if (done) return;
+        done = true;
+        clone.removeEventListener('transitionend', onEnd);
+        restore();
+    }, 750);
+}
+
+function activateCard(card) {
+    if (focusedCard === card) {
+        closeFocus();
+    } else {
+        if (focusedCard) closeFocus({ instant: true });
+        openFocus(card);
+    }
+}
+
+// click / tap / keyboard on the real cards (not the nested reflections)
+document.querySelectorAll('.a3d > .card').forEach(card => {
+    let ts = { time: 0, x: 0, y: 0 };
 
     card.addEventListener('touchstart', (e) => {
-        e.stopPropagation();
         const touch = e.touches[0];
-        cardTouchStart.time = Date.now();
-        cardTouchStart.x = touch.clientX;
-        cardTouchStart.y = touch.clientY;
+        ts.time = Date.now();
+        ts.x = touch.clientX;
+        ts.y = touch.clientY;
     }, { passive: true });
 
     card.addEventListener('touchend', (e) => {
-        e.stopPropagation();
         const touch = e.changedTouches[0];
-        const touchDuration = Date.now() - cardTouchStart.time;
-        const moveX = Math.abs(touch.clientX - cardTouchStart.x);
-        const moveY = Math.abs(touch.clientY - cardTouchStart.y);
-
-        if (touchDuration < MAX_TOUCH_TIME &&
-            moveX < MAX_TOUCH_MOVE &&
-            moveY < MAX_TOUCH_MOVE) {
-            selectCard(card);
+        const dt = Date.now() - ts.time;
+        const mx = Math.abs(touch.clientX - ts.x);
+        const my = Math.abs(touch.clientY - ts.y);
+        if (dt < MAX_TOUCH_TIME && mx < MAX_TOUCH_MOVE && my < MAX_TOUCH_MOVE) {
+            lastTouchHandled = Date.now();
+            activateCard(card);
         }
     }, { passive: true });
 
     card.addEventListener('click', (e) => {
         e.stopPropagation();
-        selectCard(card);
+        if (Date.now() - lastTouchHandled < 600) return; // synthetic click after a tap
+        activateCard(card);
+    });
+
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            activateCard(card);
+        }
     });
 });
 
+// Escape closes the foregrounded card
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && focusedCard) closeFocus();
+});
+
+// keep the foregrounded card fitted if the window changes size
+window.addEventListener('resize', () => {
+    if (!focusedCard || !focusClone) return;
+    const media = focusedCard.querySelector('video, img');
+    if (!media) return;
+    const t = fitRect(mediaAspect(media));
+    setBox(focusClone, t.left, t.top, t.w, t.h, t.radius);
+});
 
 /*
 el.addEventListener('touchstart', e => {
@@ -508,14 +779,11 @@ el.addEventListener('touchstart', e => {
 
 // Carousel touch handlers
 function handleTouchStart(e) {
+    if (carouselFocused) return;
     const touch = e.touches[0];
     touchStartTime = Date.now();
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
-
-    if (e.target.closest('.card')) {
-        return;
-    }
 
     startCarouselDrag(touch);
 }
@@ -543,13 +811,13 @@ function startCarouselDrag(touch) {
     el.style.animationPlayState = 'paused';
 }
 
-el.addEventListener('touchstart', handleTouchStart, { passive: false });
+scene.addEventListener('touchstart', handleTouchStart, { passive: false });
 
 
 
 
 
-el.addEventListener('touchmove', e => {
+scene.addEventListener('touchmove', e => {
     if (!isDragging || isThrottled) return;
 
     const currentX = e.touches[0].clientX;
@@ -590,8 +858,9 @@ el.addEventListener('touchmove', e => {
     setTimeout(() => { isThrottled = false; }, 16);
 }, { passive: false });
 
-el.addEventListener('touchend', () => {
+scene.addEventListener('touchend', () => {
     isDragging = false;
+    if (carouselFocused) return;
 
     // Clean up RAF
     if (rafId) {
@@ -643,16 +912,31 @@ el.addEventListener('touchend', () => {
 
 
 window.onload = () => {
+    // prefers-reduced-motion: show the text statically instead of typing it
+    const reduceMotion = window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     // For single intro element
     const intro = document.getElementById('typewriter_intro');
-    if (intro) animateTypewriter(intro, headlines);
+    if (intro) {
+        if (reduceMotion) {
+            intro.textContent = headlines[0];
+            const live = document.getElementById('typewriter_live');
+            if (live) live.textContent = headlines[0];
+        } else {
+            animateTypewriter(intro, headlines);
+        }
+    }
 
     // For all card-text elements
     const cardsText = document.querySelectorAll('.card-text');
     cardsText.forEach((card, index) => {
         const key = 'card' + (index + 1);
         const texts = cardtext[key];
-        if (texts) {
+        if (!texts) return;
+        if (reduceMotion) {
+            card.textContent = texts[0];
+        } else {
             animateTypewriter(card, texts);
         }
     });

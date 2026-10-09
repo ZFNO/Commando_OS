@@ -4,8 +4,8 @@
 
   <head>
     <meta charset="UTF-8">
-    <title>C_OS:reloaded</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./p5-skin.css">
 
   </head>
     
@@ -17,35 +17,21 @@
 
 	<a href="#" class="logo"><div class= "faint-blink" style = "display: inline;">.</div>C_OS</a>
   
-  <div class="hamburger" id="hamburger">
-    <div></div>
-    <div></div>
-    <div></div>
-  </div>
-  <ul class="menu-list">
-  <li><a href="#" class="logo-burger" style= "@media (max-width: 600px) { }font-size: 50px;">
+  <button class="hamburger" id="hamburger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menu-list">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <ul class="menu-list" id="menu-list">
+  <li><a href="#" class="logo-burger">
     <div class="faint-blink" style="display: inline;" >></div>C_OS
   </a></li>
     <li><a href="#">Student</a></li>
     <li><a href="#">Dev</a></li>
     <li><a href="#">Enterprise</a></li>
     <li><a href="#">Military</a></li>
-		
-		<!--> dev<-->
-		<li>		<button class="text-button" id="toggleBtn"></button> 
-	<button class="text-button" id="editColorsBtn">   </button> 
- <div id="colorMenu" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%);
-																			 background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.3); z-index:10000;">
-			<form id="colorForm">
-				<!-- Inputs will go here -->
-			</form>
-			<button id="closeMenu">Close</button>
-		</div>
-
-		<!-- >dev<-->
   </ul>
 </nav>  <!--+++++++++ nav bar end+++++++++++-->
-
 
 <div class="scene">
 	
@@ -55,13 +41,14 @@
 	<div class= "scene-overlay"></div>
 </div>
 
-<div class = "heading_title" id="titlebar">
-	<div class = "faint-blink"
+<h1 class = "heading_title" id="titlebar">
+	<span class = "faint-blink"
 			 style="display: inline; 
 							">
-		></div>Commando_OS</div>
+		></span>Commando_OS</h1>
 
-<div class = "heading_liner"  id="typewriter_intro"> </div>
+<h2 class = "heading_liner"  id="typewriter_intro"> </h2>
+<p class="sr-only" id="typewriter_live" aria-live="polite"></p>
 <!--nextblock/-->
 
 <div class="contentblock1">

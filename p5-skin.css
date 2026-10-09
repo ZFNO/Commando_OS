@@ -1,0 +1,251 @@
+/* =========================================================================
+   p5-skin.css  -  Persona 5 UI skin for C_OS
+   Drop-in layer: the <link> sits AFTER style.css. Visual only - no layout
+   math, no transforms on the 3D card chain are touched.
+   Palette: pure black / paper white / one loud red (#e60012).
+   Display type: Anton, all-caps, skewX(-3deg), hard black offset shadow.
+   Hard rectangles: no border-radius, thick outlines, offset sticker shadows.
+   ========================================================================= */
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;600;700&family=Bebas+Neue&display=swap");
+
+:root{
+  --p5-red:#e60012;
+  --p5-red-dk:#a3000d;
+  --p5-black:#050505;
+  --p5-panel:#0d0d0d;
+  --p5-line:#2a2a2a;
+  --p5-white:#f4f4f4;
+  --p5-grey:#9a9a9a;
+  --p5-skew:-3deg;
+
+  --f-display:"Anton",sans-serif;
+  --f-label:"Bebas Neue",sans-serif;
+  --f-ui:"Oswald",sans-serif;
+
+  /* repoint C_OS's own design tokens at the P5 palette so the built-in
+     colour switcher (dev panel) stays coherent with the skin */
+  --background:#050505;
+  --main-h1:#f4f4f4;
+  --faint-blink:#e60012;
+  --main-h2:#e60012;
+  --main-h3:#000000;
+  --nav-logo:#ffffff;
+  --nav-items:#bdbdbd;
+  --nav-items-hover:#000000;
+  --nav-hamburger:#e60012;
+  --card-text:#f4f4f4;
+  --main-glow:10px 10px 0 rgba(230,0,18,.55);
+}
+
+/* ------------------------------------------------------------- page shell */
+html,body{
+  background:
+    radial-gradient(1000px 620px at 78% -10%, rgba(230,0,18,.20) 0%, rgba(230,0,18,0) 60%),
+    repeating-linear-gradient(-45deg, #070707 0 42px, #0a0a0a 42px 84px);
+  background-attachment:fixed;
+  /* drift the diagonal stripes; one 84px period along the -45deg axis = 42*sqrt2 ~ 59.4px in x&y */
+  background-position:0 0, 0 0;
+  animation:p5-stripe-drift 3s linear infinite;
+  color:var(--p5-white);
+  font-family:var(--f-ui);
+}
+
+/* moving diagonal stripes (only the repeating-gradient layer; glow stays put) */
+@keyframes p5-stripe-drift{
+  from{ background-position:0 0, 0 0; }
+  to  { background-position:0 0, 59.4px 59.4px; }
+}
+@media (prefers-reduced-motion:reduce){
+  html,body{ animation:none; }
+}
+
+/* halftone + vignette overlay */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:9998;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(0,0,0,0) 42%, rgba(0,0,0,.60) 100%),
+    repeating-conic-gradient(#000 0% 25%, rgba(0,0,0,0) 0% 50%);
+  background-size:auto, 6px 6px;
+  opacity:.15;
+  mix-blend-mode:multiply;
+}
+
+/* ------------------------------------------------------------------ nav */
+nav{
+  background:rgba(6,6,6,.90);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  border-bottom:3px solid var(--p5-red);
+  box-shadow:0 6px 0 rgba(0,0,0,.55);
+  color:var(--p5-white);
+}
+nav .logo,
+nav .logo-burger{
+  font-family:var(--f-display);
+  font-weight:400;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#fff;
+  transform:skewX(var(--p5-skew));
+  transform-origin:left center;
+}
+nav .logo-burger{ color:var(--p5-red); }
+
+nav ul li a{
+  font-family:var(--f-ui);
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--p5-grey);
+  padding:7px 13px;
+  border:1px solid transparent;
+  transition:background .15s ease, color .15s ease, border-color .15s ease;
+}
+nav ul li a:hover,
+nav.active ul li a.active{
+  color:#000;
+  background:var(--p5-red);
+  border-color:var(--p5-red);
+}
+
+/* hamburger -> red bars in a hard box */
+.hamburger{
+  border:1px solid var(--p5-line);
+  padding:6px 7px;
+}
+.hamburger span{ background:var(--p5-red); }
+
+/* mobile overlay menu */
+nav.active ul{
+  background:rgba(5,5,5,.97) !important;
+  border-left:6px solid var(--p5-red);
+}
+nav.active ul li a{
+  font-family:var(--f-display);
+  font-size:2rem;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#fff;
+}
+
+/* -------------------------------------------------------------- headings */
+.heading_title{
+  color:#fff;
+  font-family:var(--f-display);
+  font-weight:400;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  -webkit-text-stroke:2px #000;
+  text-shadow:6px 6px 0 #000;
+  filter:none;
+  position:relative;
+  top:auto; /* style.css leaves a dormant top:500% for position:static; neutralise it */
+}
+/* red slab under the wordmark */
+.heading_title::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-.10em;
+  width:42%;
+  height:.14em;
+  background:var(--p5-red);
+  transform:translateX(-50%) skewX(-14deg);
+  pointer-events:none;
+}
+.heading_title .faint-blink{
+  color:var(--p5-red);
+  -webkit-text-stroke:0;
+  text-shadow:none;
+}
+
+.heading_liner{
+  color:var(--p5-red);
+  font-family:var(--f-label);
+  font-weight:400;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  filter:none;
+}
+@media (max-width:600px){
+  .heading_title{ filter:none; text-shadow:4px 4px 0 #000; top:auto; }
+}
+
+/* ----------------------------------------------------------- scene/cards */
+.scene-overlay{ background:var(--p5-black); }
+
+.card{
+  border-radius:0;
+  filter:grayscale(90%) blur(3px);
+  opacity:.22;
+}
+.card.active{ filter:grayscale(0%); opacity:1; }
+
+/* red corner flag on each upright card (not on the mirrored reflections) */
+.card:not(.reflection)::before{
+  content:"";
+  position:absolute;
+  top:0; right:0;
+  width:0; height:0;
+  border-top:46px solid var(--p5-red);
+  border-left:46px solid transparent;
+  pointer-events:none;
+  z-index:5;
+}
+
+.card:hover,
+.card.active:hover{
+  border:0;
+  outline:3px solid var(--p5-white);
+  outline-offset:-3px;
+  box-shadow:10px 10px 0 rgba(230,0,18,.60);
+}
+.card.selected{
+  border:0;
+  outline:4px solid var(--p5-red);
+  outline-offset:-4px;
+  box-shadow:12px 12px 0 rgba(230,0,18,.85);
+  animation:card-pulse 2s infinite;
+}
+
+.card .card-text{
+  font-family:var(--f-display);
+  font-size:calc(var(--card-font-size) * .95);
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:#fff;
+  -webkit-text-stroke:1px #000;
+  text-shadow:3px 3px 0 #000;
+}
+
+/* --------------------------------------------------------------- dev ui */
+.dev-panel{
+  background:rgba(5,5,5,.92);
+  border-top:3px solid var(--p5-red);
+  padding:6px 10px;
+}
+.dev-panel .text-button{
+  font-family:var(--f-ui);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--p5-grey);
+  padding:6px 10px;
+  cursor:pointer;
+}
+.dev-panel .text-button:hover{
+  color:#000;
+  background:var(--p5-red);
+}
+#colorMenu{
+  border-radius:0 !important;
+  background:var(--p5-panel) !important;
+  color:var(--p5-white) !important;
+  border-top:4px solid var(--p5-red) !important;
+}

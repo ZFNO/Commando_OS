@@ -1,13 +1,9 @@
-﻿@import url('https://fonts.googleapis.com/css2?\
-family=Emerald+Serif&\
-family=Forever+Freedom&\
-family=Bauhaus&\
-family=Bebas Neue&\
-display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
 @font-face {
   font-family: 'Alliance No.2';
   src: url('font/alliance-no2.woff2') format('woff2');
+  font-display: swap;
 
   font-weight: normal;
   font-style: normal;
@@ -70,6 +66,14 @@ display=swap');
 	font-size: 16px;
 }
 
+/* dev panel container (dev only) */
+.dev-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 10001;
+}
+
 #colorMenu {
 	color: black;
   max-width: 300px;
@@ -82,7 +86,6 @@ display=swap');
 nav {
 
 	font-family: var(--main-font);
-  height:200px;
     width: 100%;         /* be explicit */
   max-width: 100vw;    /* never get wider than viewport */
   box-sizing: border-box;
@@ -127,7 +130,7 @@ nav ul {
   gap: 2rem;
   margin: 0;
   padding: 3%;
-	opacity: transparent;
+	opacity: 1;
 }
 /* */
 nav ul li a {
@@ -202,6 +205,10 @@ nav.active .logo-burger {
 
 .hamburger {
 	
+	background: none;   /* <button> reset */
+	border: 0;
+	padding: 0;
+	appearance: none;
 	position:absolute;
 top: 50%;
   right: 7%; /* place on right */
@@ -217,7 +224,7 @@ top: 50%;
   gap: 5px;
 	
 }
-.hamburger div {
+.hamburger span {
 	background: var(--nav-hamburger);
 	transition: all 0.3s ease;
   width: 25px;
@@ -236,20 +243,20 @@ top: 50%;
   /* push content up, hide top 50px */
   	}
 
-nav.active .hamburger div:nth-child(1) {
+nav.active .hamburger span:nth-child(1) {
   transform: rotate(45deg) translate(6px, 5px);
 	
 }
-nav.active .hamburger div:nth-child(2) {
+nav.active .hamburger span:nth-child(2) {
 	transform: translateX(-100px);
   opacity: 0;
 }
-nav.active .hamburger div:nth-child(3) {
+nav.active .hamburger span:nth-child(3) {
   transform: rotate(-45deg) translate(6px, -5px);
 }
 
-nav.active .hamburger div:nth-child(1),
-nav.active .hamburger div:nth-child(3) {
+nav.active .hamburger span:nth-child(1),
+nav.active .hamburger span:nth-child(3) {
   background: var(--nav-hamburger); /* color when hamburger is X */
 }
 
@@ -287,13 +294,16 @@ nav.active .hamburger div:nth-child(3) {
     transition: background-color 1.5s ease, display 1.5s ease;
     justify-content: center; /* horizontal */
     align-items: center;
-    display: relative;
     flex-direction: column;
     justify-content: center; /* vertical align */
     align-items: center;     /* horizontal align */
     gap: 20px;               /* space between items */
     height: 100%;
 
+  }
+
+  nav.active .logo-burger {
+    font-size: 50px;
   }
 
 	nav.active menu-list {
@@ -311,6 +321,19 @@ nav.active .hamburger div:nth-child(3) {
 
 
 /*======================independent effects=========================*/
+/* visually hidden but exposed to assistive tech (typewriter live region) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .faint-blink{
 	color: var(--faint-blink);
 	animation: flickerAnimationcore 1.3s infinite ease;
@@ -328,6 +351,7 @@ nav.active .hamburger div:nth-child(3) {
 
 /*======================Heading Title STart=========================*/
 .heading_title{
+  margin: 0; /* reset UA h1 margin now that this is a real <h1> */
 	
 	  position: static; /* or absolute */
 	/*text-shadow: 2px 2px 4px rgba(0,0,0,0.5);*/
@@ -339,7 +363,7 @@ nav.active .hamburger div:nth-child(3) {
 	
 
 text-shadow: var(--main-glow);
- 	transform: translate(0%, -150%); /* clamp(2vw, 8vw, 20px);
+ 	transform: translate(0%, -50%); /* clamp(2vw, 8vw, 20px);
 		*/
 	font-family: var(--catchy-font);
   font-size: clamp(56px, 7.5vw, 64px);
@@ -359,16 +383,17 @@ text-shadow: var(--main-glow);
 
 
 .heading_liner{
+  margin: 0; /* reset UA h2 margin now that this is a real <h2> */
 	position: static; /* or absolute */
 	/*text-shadow: 2px 2px 4px rgba(0,0,0,0.5);*/
 	color: var(--main-h2);
 		filter:blur(0.5px);
 	/*filter: invert(1); */
 	
-  transform: translate(0%, clamp(-100px,-600%, -10000px)); 
+  transform: translate(0%, -140px); 
   /* clamp(2vw, 8vw, 20px);*/
 	font-family: var(--main-font);
-  font-size:  clamp(12px, 2vw, 40px); /* clamp(2vw, 8vw, 20px);*/
+  font-size: clamp(12px, 2vw, 40px); /* clamp(2vw, 8vw, 20px);*/
   font-weight: bold;
   letter-spacing: 0.5vw;
   text-transform: uppercase;
@@ -436,6 +461,15 @@ text-shadow: var(--main-glow);
 
 
 /*======================Heading Title End=========================*/
+
+/* Tablet portrait: the desktop liner lift (-140px) rides up over the title;
+   lower it so it clears the heading. Phones (<=600px) and desktop untouched. */
+@media (min-width: 601px) and (max-width: 1024px) and (orientation: portrait) {
+  .heading_liner {
+    transform: translate(0%, -60px);
+  }
+}
+
 
 
 /* ========================= SCENE CSS ========================= */
@@ -507,11 +541,10 @@ pointer-events: none;
 }
 
 
-.a3d:hover {
-	/*animation-play-state: paused;*/
-	  animation-play-state: paused;
-	    /* For WebKit browsers (Safari, Chrome) */
-
+/* pause on hover: only where a real pointer exists, otherwise the
+   sticky :hover state would leave the carousel frozen on touch */
+@media (hover: hover) and (pointer: fine) {
+  .a3d:hover { animation-play-state: paused; }
 }
 /*
 .a3d::after {
@@ -634,17 +667,17 @@ pointer-events: none;
   }
 
 .card.selected {
-  transform: scale(1.1);
+  scale: 1.1;
   z-index: 100;
   box-shadow: 0 0 30px rgba(247, 181, 56, 0.7);
   border: 2px solid #F7b538;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: scale 0.3s ease, box-shadow 0.3s ease;
   }
 
 @keyframes card-pulse {
-  0% {transform: scale(1.05);}
-  50% {transform: scale(1.08);}
-  100% {transform: scale(1.05);}
+  0% {scale: 1.05;}
+  50% {scale: 1.08;}
+  100% {scale: 1.05;}
   }
 
 .card.selected {
@@ -766,6 +799,39 @@ pointer-events: none;
   pointer-events: none; /* so it does not block clicks */
  /* outline: 2px solid blue; /* show bounding box */
 }
+/* ================= foreground (lifted) card ================= */
+#focus-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+}
+
+.focus-clone {
+  position: fixed;
+  overflow: hidden;
+  background: #000;
+  border-radius: 1.5em;
+  pointer-events: none;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  will-change: left, top, width, height, border-radius;
+}
+
+.focus-clone.open {
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65), 0 0 45px rgba(247, 181, 56, 0.35);
+}
+
+.focus-clone > video,
+.focus-clone > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 /* ============= card CSS end ============ */
 /* ===================content blockk =========================*/
 .contentblock{
@@ -780,7 +846,7 @@ pointer-events: none;
 
 
 @media (prefers-reduced-motion: reduce) {
-	.a3d { animation-duration: 70s }
+	.a3d { animation: none }
 }
 
 
