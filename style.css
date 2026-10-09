@@ -532,11 +532,10 @@ pointer-events: none;
 }
 
 
-.a3d:hover {
-	/*animation-play-state: paused;*/
-	  animation-play-state: paused;
-	    /* For WebKit browsers (Safari, Chrome) */
-
+/* pause on hover: only where a real pointer exists, otherwise the
+   sticky :hover state would leave the carousel frozen on touch */
+@media (hover: hover) and (pointer: fine) {
+  .a3d:hover { animation-play-state: paused; }
 }
 /*
 .a3d::after {

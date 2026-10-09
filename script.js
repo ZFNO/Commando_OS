@@ -486,13 +486,17 @@ let progress = 0;  // from 0 to 1
 
 
 
-el.addEventListener('mouseenter', () => {
-    el.style.animationPlayState = 'paused';
-});
+// hover-to-pause is a desktop affordance: on touch devices the sticky :hover
+// state would otherwise leave the carousel permanently paused.
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    el.addEventListener('mouseenter', () => {
+        el.style.animationPlayState = 'paused';
+    });
 
-el.addEventListener('mouseleave', () => {
-    el.style.animationPlayState = 'running';
-});
+    el.addEventListener('mouseleave', () => {
+        el.style.animationPlayState = 'running';
+    });
+}
 
 el.addEventListener('wheel', e => {
     if (el.style.animationPlayState === 'paused') {
@@ -546,7 +550,8 @@ document.querySelectorAll('.card').forEach(card => {
     let cardTouchStart = { time: 0, x: 0, y: 0 };
 
     card.addEventListener('touchstart', (e) => {
-        e.stopPropagation();
+        // no stopPropagation here: the touch must bubble up to the carousel
+        // drag handler on .scene so a card can also pause + drag the revolve.
         const touch = e.touches[0];
         cardTouchStart.time = Date.now();
         cardTouchStart.x = touch.clientX;
@@ -554,7 +559,6 @@ document.querySelectorAll('.card').forEach(card => {
     }, { passive: true });
 
     card.addEventListener('touchend', (e) => {
-        e.stopPropagation();
         const touch = e.changedTouches[0];
         const touchDuration = Date.now() - cardTouchStart.time;
         const moveX = Math.abs(touch.clientX - cardTouchStart.x);
@@ -616,10 +620,6 @@ function handleTouchStart(e) {
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
 
-    if (e.target.closest('.card')) {
-        return;
-    }
-
     startCarouselDrag(touch);
 }
 
@@ -646,13 +646,13 @@ function startCarouselDrag(touch) {
     el.style.animationPlayState = 'paused';
 }
 
-el.addEventListener('touchstart', handleTouchStart, { passive: false });
+scene.addEventListener('touchstart', handleTouchStart, { passive: false });
 
 
 
 
 
-el.addEventListener('touchmove', e => {
+scene.addEventListener('touchmove', e => {
     if (!isDragging || isThrottled) return;
 
     const currentX = e.touches[0].clientX;
@@ -693,7 +693,7 @@ el.addEventListener('touchmove', e => {
     setTimeout(() => { isThrottled = false; }, 16);
 }, { passive: false });
 
-el.addEventListener('touchend', () => {
+scene.addEventListener('touchend', () => {
     isDragging = false;
 
     // Clean up RAF
