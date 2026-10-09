@@ -484,21 +484,27 @@ function animateTypewriter(element, texts, textIndex = 0, charIndex = 0) {
 const el = document.querySelector('.a3d');
 let progress = 0;  // from 0 to 1
 
+// true while a card is lifted into the foreground (revolve paused)
+let carouselFocused = false;
+
 
 
 // hover-to-pause is a desktop affordance: on touch devices the sticky :hover
 // state would otherwise leave the carousel permanently paused.
 if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
     el.addEventListener('mouseenter', () => {
+        if (carouselFocused) return;
         el.style.animationPlayState = 'paused';
     });
 
     el.addEventListener('mouseleave', () => {
+        if (carouselFocused) return;
         el.style.animationPlayState = 'running';
     });
 }
 
 el.addEventListener('wheel', e => {
+    if (carouselFocused) return;
     if (el.style.animationPlayState === 'paused') {
         e.preventDefault();
         // update progress by wheel delta
@@ -534,59 +540,228 @@ const MAX_TOUCH_MOVE = 10;
 
 
 
-// Function to select a card
-function selectCard(card) {
-    if (selectedCard) {
-        selectedCard.classList.remove('selected');
-        selectedCard.setAttribute('aria-pressed', 'false');
-    }
-    card.classList.add('selected');
-    card.setAttribute('aria-pressed', 'true');
-    selectedCard = card;
+/* ---------------- card click/tap -> foreground focus ----------------
+ * Selecting a card lifts it out of the carousel into a static, full-size
+ * foreground view (its reflection hidden, the revolve paused). Selecting the
+ * foregrounded card again sends it back and resumes the revolve.
+ */
+const focusLayer = document.createElement('div');
+focusLayer.id = 'focus-layer';
+focusLayer.setAttribute('aria-hidden', 'true');
+document.body.appendChild(focusLayer);
+
+let focusedCard = null;      // the real card currently lifted forward
+let focusClone = null;       // its overlay clone
+let focusOpenedAt = 0;       // guards against the opening tap's synthetic click
+let lastTouchHandled = 0;    // guards against click-after-touch double firing
+
+// natural aspect ratio of a card's media (fallback: 9:16 portrait)
+function mediaAspect(media) {
+    const vw = media.videoWidth || media.naturalWidth || 0;
+    const vh = media.videoHeight || media.naturalHeight || 0;
+    return (vw && vh) ? (vw / vh) : (9 / 16);
 }
 
-// Add touch events to each card
-document.querySelectorAll('.card').forEach(card => {
-    let cardTouchStart = { time: 0, x: 0, y: 0 };
+// largest centred box of the given aspect that fits the viewport
+function fitRect(ar) {
+    const maxW = window.innerWidth * 0.9;
+    const maxH = window.innerHeight * 0.9;
+    let w = maxW, h = w / ar;
+    if (h > maxH) { h = maxH; w = h * ar; }
+    return {
+        left: (window.innerWidth - w) / 2,
+        top: (window.innerHeight - h) / 2,
+        w: w, h: h,
+        radius: Math.min(w, h) * 0.045
+    };
+}
+
+function setBox(node, l, t, w, h, r) {
+    node.style.left = l + 'px';
+    node.style.top = t + 'px';
+    node.style.width = w + 'px';
+    node.style.height = h + 'px';
+    if (r != null) node.style.borderRadius = r + 'px';
+}
+
+function openFocus(card) {
+    const media = card.querySelector(':scope > video, :scope > img') ||
+                  card.querySelector('video, img');
+    if (!media) return;
+
+    // clear any clone still animating out from a previous close
+    focusLayer.querySelectorAll('.focus-clone').forEach(n => n.remove());
+
+    // freeze the revolve
+    carouselFocused = true;
+    if (animationId) { cancelAnimationFrame(animationId); animationId = null; }
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    el.style.animationPlayState = 'paused';
+
+    const start = card.getBoundingClientRect();
+
+    // clone the media into a fixed overlay so it can leave the 3D carousel
+    const clone = document.createElement('div');
+    clone.className = 'focus-clone';
+    setBox(clone, start.left, start.top, start.width, start.height, null);
+    clone.style.borderRadius = '1.5em';
+
+    const m = document.createElement(media.tagName === 'IMG' ? 'img' : 'video');
+    m.src = media.currentSrc || media.src;
+    if (media.tagName !== 'IMG') {
+        m.muted = true; m.loop = true; m.autoplay = true;
+        m.setAttribute('playsinline', '');
+        m.disablePictureInPicture = true;
+        m.addEventListener('contextmenu', e => e.preventDefault());
+    } else {
+        m.alt = '';
+    }
+    clone.appendChild(m);
+    focusLayer.appendChild(clone);
+
+    // hide the original card (and, being its child, its reflection)
+    card.style.transition = 'opacity 0.25s ease';
+    card.style.opacity = '0';
+    card.style.pointerEvents = 'none';
+    card.setAttribute('aria-pressed', 'true');
+
+    const t = fitRect(mediaAspect(media));
+
+    // commit the start geometry, then animate out to the foreground fit
+    clone.getBoundingClientRect();
+    const dur = '0.6s', ease = 'cubic-bezier(.22,.9,.24,1)';
+    clone.style.transition =
+        'left ' + dur + ' ' + ease + ', top ' + dur + ' ' + ease + ', ' +
+        'width ' + dur + ' ' + ease + ', height ' + dur + ' ' + ease + ', ' +
+        'border-radius ' + dur + ' ease, box-shadow ' + dur + ' ease';
+
+    // synchronous target set (transition still animates); the forced reflow
+    // above committed the start geometry so the box morphs instead of jumping.
+    setBox(clone, t.left, t.top, t.w, t.h, t.radius);
+    clone.classList.add('open');
+
+    focusedCard = card;
+    focusClone = clone;
+    focusOpenedAt = Date.now();
+    focusLayer.setAttribute('aria-hidden', 'false');
+
+    clone.addEventListener('click', () => {
+        if (Date.now() - focusOpenedAt < 350) return; // ignore the opening tap's click
+        closeFocus();
+    });
+}
+
+function closeFocus(opts) {
+    opts = opts || {};
+    const card = focusedCard, clone = focusClone;
+    if (!card || !clone) return;
+    focusedCard = null;
+    focusClone = null;
+
+    card.setAttribute('aria-pressed', 'false');
+    focusLayer.setAttribute('aria-hidden', 'true');
+
+    const restore = () => {
+        if (clone.parentNode) clone.parentNode.removeChild(clone);
+        // only un-hide / un-freeze this card if it is not focused again already
+        if (focusedCard !== card) {
+            card.style.opacity = '';
+            card.style.pointerEvents = '';
+            setTimeout(() => {
+                if (focusedCard !== card) card.style.transition = '';
+            }, 300);
+        }
+        // only resume the revolve if nothing else is focused now
+        if (!focusedCard) {
+            carouselFocused = false;
+            if (!isDragging) el.style.animationPlayState = 'running';
+        }
+    };
+
+    if (opts.instant) { restore(); return; }
+
+    const r = card.getBoundingClientRect();
+    clone.classList.remove('open');
+    clone.style.transition =
+        'left .45s ease-in, top .45s ease-in, width .45s ease-in, ' +
+        'height .45s ease-in, border-radius .45s ease-in, box-shadow .45s ease-in';
+    setBox(clone, r.left, r.top, r.width, r.height, null);
+    clone.style.borderRadius = '1.5em';
+
+    let done = false;
+    const onEnd = (e) => {
+        if (e.target !== clone || e.propertyName !== 'width' || done) return;
+        done = true;
+        clone.removeEventListener('transitionend', onEnd);
+        restore();
+    };
+    clone.addEventListener('transitionend', onEnd);
+    setTimeout(() => {
+        if (done) return;
+        done = true;
+        clone.removeEventListener('transitionend', onEnd);
+        restore();
+    }, 750);
+}
+
+function activateCard(card) {
+    if (focusedCard === card) {
+        closeFocus();
+    } else {
+        if (focusedCard) closeFocus({ instant: true });
+        openFocus(card);
+    }
+}
+
+// click / tap / keyboard on the real cards (not the nested reflections)
+document.querySelectorAll('.a3d > .card').forEach(card => {
+    let ts = { time: 0, x: 0, y: 0 };
 
     card.addEventListener('touchstart', (e) => {
-        // no stopPropagation here: the touch must bubble up to the carousel
-        // drag handler on .scene so a card can also pause + drag the revolve.
         const touch = e.touches[0];
-        cardTouchStart.time = Date.now();
-        cardTouchStart.x = touch.clientX;
-        cardTouchStart.y = touch.clientY;
+        ts.time = Date.now();
+        ts.x = touch.clientX;
+        ts.y = touch.clientY;
     }, { passive: true });
 
     card.addEventListener('touchend', (e) => {
         const touch = e.changedTouches[0];
-        const touchDuration = Date.now() - cardTouchStart.time;
-        const moveX = Math.abs(touch.clientX - cardTouchStart.x);
-        const moveY = Math.abs(touch.clientY - cardTouchStart.y);
-
-        if (touchDuration < MAX_TOUCH_TIME &&
-            moveX < MAX_TOUCH_MOVE &&
-            moveY < MAX_TOUCH_MOVE) {
-            selectCard(card);
+        const dt = Date.now() - ts.time;
+        const mx = Math.abs(touch.clientX - ts.x);
+        const my = Math.abs(touch.clientY - ts.y);
+        if (dt < MAX_TOUCH_TIME && mx < MAX_TOUCH_MOVE && my < MAX_TOUCH_MOVE) {
+            lastTouchHandled = Date.now();
+            activateCard(card);
         }
     }, { passive: true });
 
     card.addEventListener('click', (e) => {
         e.stopPropagation();
-        selectCard(card);
+        if (Date.now() - lastTouchHandled < 600) return; // synthetic click after a tap
+        activateCard(card);
     });
 
-    // Enter / Space select a card too (the click path is pointer only)
-    if (!card.classList.contains('reflection')) {
-        card.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-                e.preventDefault();
-                selectCard(card);
-            }
-        });
-    }
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+            e.preventDefault();
+            activateCard(card);
+        }
+    });
 });
 
+// Escape closes the foregrounded card
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && focusedCard) closeFocus();
+});
+
+// keep the foregrounded card fitted if the window changes size
+window.addEventListener('resize', () => {
+    if (!focusedCard || !focusClone) return;
+    const media = focusedCard.querySelector('video, img');
+    if (!media) return;
+    const t = fitRect(mediaAspect(media));
+    setBox(focusClone, t.left, t.top, t.w, t.h, t.radius);
+});
 
 /*
 el.addEventListener('touchstart', e => {
@@ -615,6 +790,7 @@ el.addEventListener('touchstart', e => {
 
 // Carousel touch handlers
 function handleTouchStart(e) {
+    if (carouselFocused) return;
     const touch = e.touches[0];
     touchStartTime = Date.now();
     touchStartX = touch.clientX;
@@ -695,6 +871,7 @@ scene.addEventListener('touchmove', e => {
 
 scene.addEventListener('touchend', () => {
     isDragging = false;
+    if (carouselFocused) return;
 
     // Clean up RAF
     if (rafId) {
