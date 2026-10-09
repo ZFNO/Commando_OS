@@ -95,6 +95,12 @@ nav .logo-burger{
 }
 nav .logo-burger{ color:var(--p5-red); }
 
+/* Optical nudge: the red ">" is not a letter, so the C_OS reads right of
+   centre. Shift the burger logo left by ~one character (the ">" rides
+   along with it, ~5%). Overlay-only, so it never collides with the rest. */
+nav .logo-burger{ transform:translateX(-1ch) skewX(var(--p5-skew)); }
+
+
 nav ul li a{
   font-family:var(--f-ui);
   font-weight:700;
