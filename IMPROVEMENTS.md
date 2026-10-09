@@ -24,10 +24,10 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 
 
 ## Phase 2 - Structure and metadata
-- [ ] 10 index.html and home.html share the same title C_OS:reloaded, a dev codename, so the title is duplicated. Give the real page a product title and drop the duplicate.
-- [ ] 11 The head is nearly empty. Add meta description, canonical, Open Graph, Twitter card, theme-color (site background is #111111) and a favicon. Remove the unused stylesheet link from index.html, since the visible page is the iframe.
-- [ ] 12 There is no heading structure at all: the h1 is a div with class heading_title. Make Commando_OS a real h1 and the typewriter line an h2 or p.
-- [ ] 13 Re-verify fixes 1 and 2 by dumping the nav textContent again with run_js.
+- [x] 10 index.html and home.html share the same title C_OS:reloaded, a dev codename, so the title is duplicated. Give the real page a product title and drop the duplicate.
+- [x] 11 The head is nearly empty. Add meta description, canonical, Open Graph, Twitter card, theme-color (site background is #111111) and a favicon. Remove the unused stylesheet link from index.html, since the visible page is the iframe.
+- [x] 12 There is no heading structure at all: the h1 is a div with class heading_title. Make Commando_OS a real h1 and the typewriter line an h2 or p.
+- [x] 13 Re-verify fixes 1 and 2 by dumping the nav textContent again with run_js.
 
 ## Phase 3 - Performance
 - [ ] 14 24 videos: each of the 12 cards builds a video plus a second video for its reflection. Drop the duplicate and mirror with CSS, or at minimum set preload to metadata.
@@ -59,3 +59,6 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 - 2026-10-09 - Phase 1 complete (items 1-9). index.js deleted, dev panel moved out of the nav,
   dev lookups in script.js guarded, CSS invalid declarations fixed, .card.selected uses scale.
   Assumption taken for D1: keep the iframe (item 9 documented, not redesigned).
+- 2026-10-09 - Phase 2 complete (items 10-13). Product title + full metadata/FB/Twitter/theme-color
+  /inline-SVG favicon on the real page, duplicate title dropped, real h1/h2 heading structure,
+  item 1+2 re-verified live. Canonical URL assumes GitHub Pages root (D3).

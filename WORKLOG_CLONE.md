@@ -123,3 +123,56 @@ an edited asset, the link/script URL was cache-busted (?v=...) before measuring.
     #colorMenu and .reflection likewise compute against the iframe viewport (= window viewport here).
 - Residual risk: only becomes an issue if the iframe is ever letterboxed (smaller than the window).
   Not the case today. Left as-is.
+## Phase 2 - Structure and metadata
+
+### Item 10 - duplicated dev-codename title
+- Files: index.html, home.html
+- Changed: index.html (the real, top-level page) now has the product title
+  `<title>Commando OS</title>`. The duplicate `<title>C_OS:reloaded</title>` was removed from
+  home.html, which is only ever shown inside the iframe (a document inside an iframe has no title UI).
+- Verified (live DOM): document.title = "Commando OS"; the iframe document has no <title> element
+  (d.querySelector('title') is null) and no page shows "C_OS:reloaded" any more.
+
+### Item 11 - empty head (metadata + favicon)
+- File: index.html
+- Changed, all in the real page's <head>:
+  * meta description
+  * theme-color #111111 (matches the site background)
+  * canonical link
+  * Open Graph: og:type, og:site_name, og:title, og:description, og:url
+  * Twitter card: twitter:card=summary, twitter:title, twitter:description
+  * favicon as an inline SVG data URI (dark #111111 tile, faint "C", red #ff4444 dot) - no new binary
+    asset added, nothing to keep in sync.
+  * removed the unused `<link rel="stylesheet" href="./style.css">` (the visible page is the iframe;
+    the parent only needs the inline body/iframe reset rules it already has).
+- Verified (live DOM): document.title "Commando OS"; metas present = description, theme-color,
+  og:type/site_name/title/description/url, twitter:card/title/description, viewport; canonical href =
+  https://zfno.github.io/Commando_OS/ ; link[rel=icon] present; parent link[rel=stylesheet] count = 0.
+- ASSUMPTION (D3): canonical/og:url use the GitHub Pages root URL https://zfno.github.io/Commando_OS/
+  because D3 says "repo root served statically (GitHub Pages style)" and the remote is ZFNO/Commando_OS.
+  If the real deploy URL differs these two hrefs must be updated.
+
+### Item 12 - real heading structure
+- Files: home.html, style.css
+- Changed: `<div class="heading_title" id="titlebar">Commando_OS</div>` -> `<h1 ...>Commando_OS</h1>`
+  and `<div class="heading_liner" id="typewriter_intro">` -> `<h2 ... id="typewriter_intro">`.
+  The inner `.faint-blink` element was changed from <div> to <span> (a <div> is not allowed as
+  content of an h1 - h1 only takes phrasing content; a span with display:inline renders identically).
+  style.css got `margin: 0` added to `.heading_title` and `.heading_liner` to neutralise the UA
+  margins that h1/h2 bring (divs had none), so the layout does not move.
+- Verified (live DOM, iframe, fresh CSS): h1 count = 1, h2 count = 1;
+    h1.heading_title: display block, margin 0px, font-size 56px (the clamp value), font-family
+      "Bebas Neue", letter-spacing 9.5px, colour rgb(223,223,223) - i.e. styling unchanged
+    h2.heading_liner: display block, margin 0px, font-size 12.67px, font-family "Alliance no.2" -
+      styling unchanged
+  The typewriter still writes into the h2 (textContent = "One AI. Infinite Profiles." mid-type).
+
+### Item 13 - re-verify items 1 and 2 (nav textContent dump)
+- Files: none (verification only)
+- Evidence (live DOM, run_js on http://localhost:8123/index.html -> iframe home.html):
+    nav.textContent = ".C_OS >C_OS Student Dev Enterprise Military"
+    nav <li> list  = [">C_OS", "Student", "Dev", "Enterprise", "Military"]
+    labels inside nav = 0
+  So the stray "dev<-->" text is gone (item 1) and none of the colour-editor labels are inside the
+  nav list any more (item 2). Cards still build (24 .card nodes) and the typewriter is running.
+

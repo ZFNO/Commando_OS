@@ -338,6 +338,7 @@ nav.active .hamburger div:nth-child(3) {
 
 /*======================Heading Title STart=========================*/
 .heading_title{
+  margin: 0; /* reset UA h1 margin now that this is a real <h1> */
 	
 	  position: static; /* or absolute */
 	/*text-shadow: 2px 2px 4px rgba(0,0,0,0.5);*/
@@ -369,6 +370,7 @@ text-shadow: var(--main-glow);
 
 
 .heading_liner{
+  margin: 0; /* reset UA h2 margin now that this is a real <h2> */
 	position: static; /* or absolute */
 	/*text-shadow: 2px 2px 4px rgba(0,0,0,0.5);*/
 	color: var(--main-h2);
