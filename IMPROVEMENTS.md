@@ -30,10 +30,10 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 - [x] 13 Re-verify fixes 1 and 2 by dumping the nav textContent again with run_js.
 
 ## Phase 3 - Performance
-- [ ] 14 24 videos: each of the 12 cards builds a video plus a second video for its reflection. Drop the duplicate and mirror with CSS, or at minimum set preload to metadata.
-- [ ] 15 Autoplay and visibility: pause off screen and on a hidden tab (IntersectionObserver plus visibilitychange). Measured 0 of 24 playing in the test tab, so confirm autoplay works in a real tab. If it does not, the carousel is static placeholders.
-- [ ] 16 animate() runs checkIntersect every animation frame forever for 24 cards, on top of 24 CSS animated videos. Gate it to while .scene is in view, or drop it and rely on IntersectionObserver.
-- [ ] 17 style.css font import is broken: four families over a line broken url with stray backslashes, three of those families do not exist on Google Fonts and are never used, and Bebas Neue is unencoded. Keep the local alliance-no2 woff2, fix or self host the rest, and add display swap.
+- [x] 14 24 videos: each of the 12 cards builds a video plus a second video for its reflection. Drop the duplicate and mirror with CSS, or at minimum set preload to metadata.
+- [x] 15 Autoplay and visibility: pause off screen and on a hidden tab (IntersectionObserver plus visibilitychange). Measured 0 of 24 playing in the test tab, so confirm autoplay works in a real tab. If it does not, the carousel is static placeholders.
+- [x] 16 animate() runs checkIntersect every animation frame forever for 24 cards, on top of 24 CSS animated videos. Gate it to while .scene is in view, or drop it and rely on IntersectionObserver.
+- [x] 17 style.css font import is broken: four families over a line broken url with stray backslashes, three of those families do not exist on Google Fonts and are never used, and Bebas Neue is unencoded. Keep the local alliance-no2 woff2, fix or self host the rest, and add display swap.
 
 ## Phase 4 - Accessibility
 - [ ] 18 The hamburger is a bare div: not focusable, no keyboard support, no aria-label, aria-expanded or aria-controls. Make it a button, toggle aria-expanded in the existing click handler, and close the menu on Escape.
@@ -62,3 +62,6 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 - 2026-10-09 - Phase 2 complete (items 10-13). Product title + full metadata/FB/Twitter/theme-color
   /inline-SVG favicon on the real page, duplicate title dropped, real h1/h2 heading structure,
   item 1+2 re-verified live. Canonical URL assumes GitHub Pages root (D3).
+- 2026-10-09 - Phase 3 complete (items 14-17). Videos preload=metadata + play/pause on
+  visibility + off-screen pause, animate() rAF loop gated to the in-view scene, broken Google
+  Fonts @import replaced with a single encoded Bebas Neue + font-display swap on the local woff2.

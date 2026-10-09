@@ -1,13 +1,9 @@
-﻿@import url('https://fonts.googleapis.com/css2?\
-family=Emerald+Serif&\
-family=Forever+Freedom&\
-family=Bauhaus&\
-family=Bebas Neue&\
-display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
 @font-face {
   font-family: 'Alliance No.2';
   src: url('font/alliance-no2.woff2') format('woff2');
+  font-display: swap;
 
   font-weight: normal;
   font-style: normal;

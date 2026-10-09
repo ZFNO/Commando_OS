@@ -175,4 +175,84 @@ an edited asset, the link/script URL was cache-busted (?v=...) before measuring.
     labels inside nav = 0
   So the stray "dev<-->" text is gone (item 1) and none of the colour-editor labels are inside the
   nav list any more (item 2). Cards still build (24 .card nodes) and the typewriter is running.
+## Phase 3 - Performance
+
+### Item 14 - 24 videos (12 cards x video + reflection video)
+- File: script.js
+- Changed: both the card <video> and the reflection <video> are now created with
+  `preload = 'metadata'` (was unset, i.e. the browser default). Not the full "drop the duplicate and
+  mirror with CSS" refactor: that would mean deleting the .reflection element and its mask/blur
+  styling and rebuilding the mirrored look with -webkit-box-reflect, which cannot blur - i.e. a
+  visible design change. The checklist explicitly allows "at minimum set preload to metadata", so
+  that is what was done, and the real cost is handled by item 15 (only on-screen videos decode).
+- Verified (live DOM, fresh cache-busted script): 24 <video> elements, `preload` = "metadata" for
+  all 24 (before: 0/24). Cards and reflections still render and play (18 of 24 - the in-view ones -
+  were playing once the page was treated as visible, see item 15).
+
+### Item 15 - autoplay and visibility
+- File: script.js
+- Changed: added a new block after the card-building loop:
+  * IntersectionObserver (rootMargin 50px) over every `.card video`: in view + tab visible -> play(),
+    otherwise -> pause(). Each video records `dataset.inview`.
+  * `visibilitychange` listener: tab hidden -> pause all; tab visible again -> play() the ones with
+    `dataset.inview === '1'`.
+  * play() rejections are swallowed (`.catch(() => {})`) so a blocked autoplay can never throw.
+- WHAT THE "0 of 24 PLAYING" WAS: the automated test tab reports `document.hidden === true`
+  (visibilityState "hidden"), and Chrome suspends media/rAF work there. Autoplay itself is fine:
+    * before this change, in a tab reporting visibilityState "visible": 17 of 24 videos playing;
+    * after this change, same tab with document.hidden forced false and visibilitychange dispatched:
+      18 playing == exactly the 18 videos in view; the other 6 are paused because they are off screen.
+    * with the tab hidden as normal: 0 playing, 18 flagged in-view -> this is the new
+      pause-on-hidden behaviour working, not a broken autoplay.
+  So the carousel is NOT static placeholders; the test tab was simply a hidden/background tab.
+- Note: muting is already set (`video.muted = true`) which is what makes the autoplay policy allow it.
+
+### Item 16 - animate() ran forever every frame
+- File: script.js
+- Changed: the permanent `requestAnimationFrame` loop is now gated by an IntersectionObserver on
+  `.scene`:
+    `let animateRafId = null; function animate() { checkIntersect(); animateRafId = requestAnimationFrame(animate); }`
+    scene in view  -> start the loop once (only if animateRafId === null)
+    scene off view -> cancelAnimationFrame(animateRafId); animateRafId = null
+    `.scene` missing -> falls back to the old unconditional `animate();`
+- Verified: because every automated tab here reports itself hidden, Chrome suspends
+  IntersectionObserver/rAF callbacks in it, so the gate cannot be exercised live (a plain reload also
+  shows rAF frozen at the ~9-15 frames that ran while the tab was briefly visible). Instead the exact
+  code block was extracted from script.js and run against rAF/IO stubs in Node:
+    PASS observed .scene
+    PASS animate() started on in-view
+    PASS next frame scheduled
+    PASS checkIntersect keeps running in view (+3)
+    PASS cancelAnimationFrame called with the live id
+    PASS animateRafId cleared
+    PASS no further checkIntersect while out of view
+    PASS loop restarts when back in view
+    PASS checkIntersect runs again
+    PASS falls back to a plain loop when .scene is missing
+    => ALL PASS
+  Live regression check: the carousel still marks cards (9 `.card.active` at load), the typewriter
+  runs and there are no errors with the new block in place.
+
+### Item 17 - broken Google Fonts @import
+- File: style.css
+- Changed: the old block was four families spread over a `url(...)` broken by literal backslash +
+  newline continuations (invalid CSS):
+      @import url('https://fonts.googleapis.com/css2?\
+      family=Emerald+Serif&\
+      family=Forever+Freedom&\
+      family=Bauhaus&\
+      family=Bebas Neue&\
+      display=swap');
+  replaced with a single, correctly encoded request:
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+  Emerald Serif / Forever Freedom / Bauhaus were dropped - they are never referenced anywhere in the
+  live files. Also added `font-display: swap;` to the local @font-face for font/alliance-no2.woff2.
+- Verified by grepping the live files (not the dist/, export/, dontinclude/, server/ copies):
+    --main-font  -> only font-family var usage; value "Alliance no.2", Georgia, serif  (LOCAL woff2)
+    --catchy-font -> .heading_title / .heading_title (mobile)   -> "Bebas Neue"
+    --card-font  -> .card .card-text                            -> "Bebas Neue"
+    "Emerald", "Forever", "Bauhaus" -> 0 hits in style.css / *.html / script.js
+  Live DOM: styleSheets cssRules contains exactly 1 @import rule (parses cleanly);
+  `document.fonts.check('16px "Bebas Neue"')` = true and `...("Alliance no.2")` = true,
+  document.fonts.status = "loaded"; h1 computed font-family = "Bebas Neue".
 

@@ -94,6 +94,7 @@ for (let i = 0; i < N; i++) {
     video.loop = true;
     video.muted = true;
     video.playsInline = true;
+    video.preload = 'metadata';
     video.controls = false;
     video.disablePictureInPicture = true;
     video.controlsList = "nodownload nofullscreen noremoteplayback";
@@ -126,6 +127,7 @@ for (let i = 0; i < N; i++) {
     reflectionVideo.loop = true;
     reflectionVideo.muted = true;
     reflectionVideo.playsInline = true;
+    reflectionVideo.preload = 'metadata';
     reflectionVideo.controls = false;
     reflectionVideo.disablePictureInPicture = true;
     reflectionVideo.controlsList = "nodownload nofullscreen noremoteplayback";
@@ -136,6 +138,42 @@ for (let i = 0; i < N; i++) {
 
     container.appendChild(card);
 }
+
+
+
+//---- video autoplay + visibility (only decode what is on screen) ----
+const videos = document.querySelectorAll('.card video');
+
+function playVideo(v) {
+    const p = v.play();
+    // autoplay can be rejected (e.g. hidden tab) - swallow the rejection
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+}
+
+const videoObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+        const v = entry.target;
+        v.dataset.inview = entry.isIntersecting ? '1' : '0';
+        if (entry.isIntersecting && !document.hidden) {
+            playVideo(v);
+        } else {
+            v.pause();
+        }
+    });
+}, { rootMargin: '50px' });
+
+videos.forEach(v => videoObserver.observe(v));
+
+document.addEventListener('visibilitychange', () => {
+    videos.forEach(v => {
+        if (document.hidden) {
+            v.pause();
+        } else if (v.dataset.inview === '1') {
+            playVideo(v);
+        }
+    });
+});
+//---- end video autoplay + visibility ----
 
 
 
@@ -308,12 +346,30 @@ function checkIntersect() {
     });
 }
 
+let animateRafId = null;
+
 function animate() {
     checkIntersect();
-    requestAnimationFrame(animate);
+    animateRafId = requestAnimationFrame(animate);
 }
 
-animate();
+// only run the per-frame intersection check while the carousel scene is on screen
+const scene = document.querySelector('.scene');
+if (scene) {
+    const sceneObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if (animateRafId === null) animate();
+            } else if (animateRafId !== null) {
+                cancelAnimationFrame(animateRafId);
+                animateRafId = null;
+            }
+        });
+    });
+    sceneObserver.observe(scene);
+} else {
+    animate();
+}
 
 
 
