@@ -363,7 +363,7 @@ nav.active .hamburger span:nth-child(3) {
 	
 
 text-shadow: var(--main-glow);
- 	transform: translate(0%, -150%); /* clamp(2vw, 8vw, 20px);
+ 	transform: translate(0%, -50%); /* clamp(2vw, 8vw, 20px);
 		*/
 	font-family: var(--catchy-font);
   font-size: clamp(56px, 7.5vw, 64px);
@@ -390,10 +390,10 @@ text-shadow: var(--main-glow);
 		filter:blur(0.5px);
 	/*filter: invert(1); */
 	
-  transform: translate(0%, clamp(-100px,-600%, -10000px)); 
+  transform: translate(0%, -140px); 
   /* clamp(2vw, 8vw, 20px);*/
 	font-family: var(--main-font);
-  font-size:  clamp(12px, 2vw, 40px); /* clamp(2vw, 8vw, 20px);*/
+  font-size: clamp(12px, 2vw, 40px); /* clamp(2vw, 8vw, 20px);*/
   font-weight: bold;
   letter-spacing: 0.5vw;
   text-transform: uppercase;
@@ -461,6 +461,15 @@ text-shadow: var(--main-glow);
 
 
 /*======================Heading Title End=========================*/
+
+/* Tablet portrait: the desktop liner lift (-140px) rides up over the title;
+   lower it so it clears the heading. Phones (<=600px) and desktop untouched. */
+@media (min-width: 601px) and (max-width: 1024px) and (orientation: portrait) {
+  .heading_liner {
+    transform: translate(0%, -60px);
+  }
+}
+
 
 
 /* ========================= SCENE CSS ========================= */
