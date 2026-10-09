@@ -1,7 +1,22 @@
+# .gitignore
+#
+# These rules only affect UNTRACKED files - git keeps tracking whatever is already in the index.
+#
+# Reconciliation note (item 24 of IMPROVEMENTS.md): several of the paths below are ALSO tracked
+# in this repo (dist/, dontinclude/, update.bat, x.bat). The contradiction is resolved here by
+# stating it explicitly and by un-ignoring the two tracked .bat files; actually untracking them
+# would be a deletion, which decision D2 puts out of scope.
+
 notes.txt
-dist
 everythingelse
-.bat
-sub 
-server
+
+# scratch / generated dirs - these still keep NEW untracked files out of the repo
+sub/
+server/
+dist/
 dontinclude/
+
+# local helper scripts are ignored, except the two that are tracked in this repo
+*.bat
+!update.bat
+!x.bat

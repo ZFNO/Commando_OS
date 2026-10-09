@@ -328,4 +328,105 @@ an edited asset, the link/script URL was cache-busted (?v=...) before measuring.
 - Verified (live DOM): #typewriter_live.textContent = "One AI. Infinite Profiles. All Systems Go."
   (the full headline, set once when that headline started), while the visible h2 is mid-type
   ("Deploy a"), i.e. the announcements are not per-keystroke.
+## Phase 5 - Cleanup and DX
+
+### Item 23 - scratch and dead files tracked in git  (DOCUMENTED ONLY - decision D2)
+- Files: none (documentation only). Per D2 nothing outside index.js was deleted or untracked.
+- Still tracked in git and left in place:
+    scriptjs_scratch.js        5,026 bytes
+    scriptx.js                19,061 bytes   (older copy of script.js)
+    versions/scr.js           19,068 bytes
+    x.bat                          0 bytes   (empty)
+    mac_commando.zip          35,205 bytes
+    mac_commando/             5 files, 17,824 bytes (the extracted zip)
+    dist/                     3 files, 15,311 bytes (stale build: index.html, script.js, style.css)
+    export/                  44 files, 86,057,648 bytes (a full export copy of the site)
+    dontinclude/              4 files, 24,594,188 bytes (scratch copies + an unrelated deck PDF)
+- Why this is a real problem: they are inside the deployed web root, so GitHub Pages would publish
+  export/ and dontinclude/ too, and the repo carries ~110 MB of duplicates.
+- Recommended follow-up (NOT done, needs a human decision that lifts D2):
+    git rm -r --cached dist export dontinclude mac_commando mac_commando.zip \
+        scriptx.js scriptjs_scratch.js versions x.bat
+  (git rm --cached keeps the files on disk; it only untracks them.)
+
+### Item 24 - .gitignore was inconsistent
+- File: .gitignore
+- Changed: rewrote the file so it is honest about the tracked state, without untracking anything
+  (D2 forbids deletions):
+  * kept the ignore rules that actually do work for untracked files - `notes.txt`, `everythingelse`,
+    `sub/`, `server/`, `dist/`, `dontinclude/`;
+  * `*.bat` is kept (it still hides new throwaway .bat files) but the two tracked scripts are
+    un-ignored explicitly with `!update.bat` and `!x.bat`;
+  * added a comment block stating that dist/, dontinclude/, update.bat and x.bat are tracked, so the
+    rule cannot apply to them, and why the full fix (untracking) is out of scope.
+- Verified:
+    git ls-files dist dontinclude update.bat x.bat  -> dist/index.html, dist/script.js,
+      dist/style.css, dontinclude/index.html, dontinclude/script.js, dontinclude/style.css,
+      update.bat, x.bat are all TRACKED (so the old rules were dead for them);
+    git check-ignore -v --no-index:
+      dist/newfile.js   <- .gitignore:16:dist/          (new files still ignored)
+      dontinclude/new.pdf <- .gitignore:17:dontinclude/ (new files still ignored - this is what
+                                                         keeps the unrelated 24 MB deck PDF out)
+      scratch.bat       <- .gitignore:20:*.bat
+      x.bat             <- .gitignore:22:!x.bat         (explicitly not ignored)
+      update.bat        <- .gitignore:21:!update.bat
+      sub/z, server/y   <- sub/ and server/
+    A stray `git status` entry for an untracked PDF inside dontinclude/ appeared while the rules were
+    briefly removed; restoring `dontinclude/` put it back under the ignore rule (confirmed again
+    with the check-ignore above).
+
+### Item 25 - README was one line
+- File: README.md (rewritten, now ~2.5 KB, no BOM)
+- Changed: the README now says what the project is, lists every meaningful file, explains how to run
+  it locally and how to deploy.
+  * Run locally: any static server with the REPOSITORY ROOT as the web root (index.html loads
+    home.html / style.css / script.js by relative path) - example `python -m http.server 8123`.
+  * Deploy: plain static files served from the repo root, GitHub Pages style
+    (Settings -> Pages -> Deploy from a branch, branch `master`, folder `/ (root)`).
+  * Mentions update.bat explicitly as the local `git add .` / `git commit` / `git push` shortcut and
+    states that it does not build anything.
+  * Keeps the "pitch deck only, nothing production-ready" disclaimer.
+- ASSUMPTION (D3, flagged here and in the README): the deploy target is a static root serve, so the
+  canonical / og:url in index.html are set to https://zfno.github.io/Commando_OS/. If the real host
+  differs, those two hrefs must be edited.
+- Verified: README.md exists, starts with "# Commando OS", 2,559 bytes, first bytes are
+  b'# Commando OS\n\nStatic landing page / pit' (no BOM).
+
+### Item 26 - .editorconfig + stray BOMs
+- Files: .editorconfig (new), style.css, README.md
+- Changed:
+  * added .editorconfig with `root = true` and `charset = utf-8` (no BOM), plus
+    `insert_final_newline = true` and `trim_trailing_whitespace = false`. `indent_style`,
+    `indent_size` and (global) `end_of_line` are deliberately NOT set, with comments explaining that
+    the sources mix tabs/spaces and LF/CRLF and must not be mass-reformatted; only `*.bat` gets
+    `end_of_line = crlf`.
+  * removed the leftover UTF-8 BOM from style.css and README.md (index.js, the third file listed in
+    the checklist, was already deleted in Phase 1). index.html, home.html and script.js were
+    already BOM-free.
+- Verified (byte level):
+    style.css   BOM=False, first bytes b"@import url('https://fonts.googleapis.co"
+    README.md   BOM=False, first bytes b'# Commando OS\n\nStatic landing page / pit'
+    index.html  BOM=False   home.html BOM=False   script.js BOM=False
+    .gitignore / .editorconfig / IMPROVEMENTS.md / WORKLOG_CLONE.md / update.bat: BOM=False
+  and after the BOM removal the page still parses and renders: live DOM styleSheets[0] has 64
+  cssRules (no parse error), fonts still resolve, carousel + typewriter still run.
+
+---
+
+## Final end-to-end check (after every phase, fresh cache-busted assets)
+- index.html -> iframe home.html at http://localhost:8123:
+    document.title                = "Commando OS"
+    h1                            = ">Commando_OS", h2 present
+    nav.textContent               = ".C_OS >C_OS Student Dev Enterprise Military"  (no stray text)
+    .card nodes                   = 24  (12 real cards + 12 reflections)
+    videos                        = 24, all aria-hidden, all preload="metadata"
+    videos playing                = 0 while the tab reports itself hidden (by design), 13 flagged
+                                    in view; they play as soon as visibilityState is 'visible'
+    typewriter_intro              = mid-type ("One AI. Infinite Profiles. All System...")
+    #typewriter_live              = "One AI. Infinite Profiles. All Systems Go."
+    hamburger                     = BUTTON, aria-expanded="false", aria-controls="menu-list"
+    selected card                 = scale 1.05 with transform matrix3d(...)  -> 3D chain intact
+    fonts                         = Bebas Neue (Google) + Alliance No.2 (local woff2) both available
+    parent page stylesheets       = 0 (the unused link was removed), favicon present
+- Nothing was pushed: `git log --oneline` shows all improvement commits local on master.
 

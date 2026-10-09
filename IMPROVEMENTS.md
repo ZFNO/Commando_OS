@@ -8,8 +8,8 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 
 ## Decisions needed before further code changes
 - [x] D1 Iframe or single page: drop the iframe in index.html and inline home.html, or keep it. Affects items 8, 9, 10, 11.
-- [ ] D2 Deletion scope: which of these are live vs junk - dist/, export/, mac_commando/, mac_commando.zip, scriptx.js, scriptjs_scratch.js, versions/, x.bat, dontinclude/
-- [ ] D3 Deploy path: GitHub Pages from repo root, or the update.bat plus export/ flow. README must match.
+- [x] D2 Deletion scope: which of these are live vs junk - dist/, export/, mac_commando/, mac_commando.zip, scriptx.js, scriptjs_scratch.js, versions/, x.bat, dontinclude/
+- [x] D3 Deploy path: GitHub Pages from repo root, or the update.bat plus export/ flow. README must match.
 
 ## Phase 1 - Correctness bugs
 - [x] 1 home.html - malformed comment. The line parses as an empty comment followed by literal text, so the browser renders the stray text into the nav. Confirmed live: the nav currently prints it. Fix to a normal comment.
@@ -43,10 +43,10 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 - [x] 22 The typewriter has no aria-live, so the headline is announced unpredictably. Add aria-live polite or expose a static text node.
 
 ## Phase 5 - Cleanup and DX
-- [ ] 23 Scratch and dead files tracked in git: scriptjs_scratch.js, scriptx.js, versions/scr.js, x.bat (empty), mac_commando.zip plus its extracted folder, and the stale dist/ build. Depends on D2.
-- [ ] 24 .gitignore is inconsistent: it lists dist, sub, server, dontinclude and .bat, yet several of those are tracked. Reconcile.
-- [ ] 25 README is one line. Add what the project is, how to run it locally, and how to deploy.
-- [ ] 26 Add .editorconfig (utf-8, no BOM). style.css, index.js and README.md currently carry a UTF-8 BOM while index.html, home.html and script.js do not.
+- [x] 23 Scratch and dead files tracked in git: scriptjs_scratch.js, scriptx.js, versions/scr.js, x.bat (empty), mac_commando.zip plus its extracted folder, and the stale dist/ build. Depends on D2.
+- [x] 24 .gitignore is inconsistent: it lists dist, sub, server, dontinclude and .bat, yet several of those are tracked. Reconcile.
+- [x] 25 README is one line. Add what the project is, how to run it locally, and how to deploy.
+- [x] 26 Add .editorconfig (utf-8, no BOM). style.css, index.js and README.md currently carry a UTF-8 BOM while index.html, home.html and script.js do not.
 
 ## Verified - no action needed
 - [x] The single non-ASCII character in script.js is a right arrow (U+2192) inside a headline. It is valid; the garbled text seen on the console was a terminal encoding artifact, not a file bug.
@@ -68,3 +68,7 @@ Legend: [ ] todo    [~] in progress    [x] done    [-] skipped
 - 2026-10-09 - Phase 4 complete (items 18-22). Hamburger is a real button with aria-expanded/
   aria-controls + Escape-to-close, decorative videos aria-hidden, cards keyboard-selectable,
   reduced-motion stops the carousel + typewriter, polite live region announces each headline once.
+- 2026-10-09 - Phase 5 complete (items 23-26). Scratch/dead files documented only (D2 = no
+  deletions), .gitignore reconciled without untracking anything, README rewritten for a static
+  GitHub-Pages-style root deploy (D3), .editorconfig added and the stray UTF-8 BOMs removed.
+- 2026-10-09 - ALL PHASES DONE (items 1-26). Nothing pushed; all commits local on master.
